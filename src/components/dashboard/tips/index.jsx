@@ -2,16 +2,8 @@ import { useMemo, useState } from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import { useAppDispatch } from "../../../app/hooks";
 import { createTip, deleteTip, updateTip } from "../../../features/admin/adminSlice";
-import { formatDateTime } from "../../../utils/formatters";
-
-const INITIAL_FORM = {
-  title_en: "",
-  title_ar: "",
-  description_en: "",
-  description_ar: "",
-  type: "image",
-  videoUrl: ""
-};
+import { getTipsColumns } from "./columns";
+import { buildTipFormData, INITIAL_FORM, mapTipsRows } from "./helpers";
 
 function TipsPanel({ tips, mutationStatus }) {
   const dispatch = useAppDispatch();
@@ -20,15 +12,14 @@ function TipsPanel({ tips, mutationStatus }) {
   const [editingTipId, setEditingTipId] = useState("");
   const [editingPreviewImage, setEditingPreviewImage] = useState("");
 
-  const rows = useMemo(
+  const rows = useMemo(() => mapTipsRows(tips), [tips]);
+  const columns = useMemo(
     () =>
-      [...tips]
-        .sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt))
-        .map((tip) => ({
-          id: tip._id,
-          ...tip
-        })),
-    [tips]
+      getTipsColumns({
+        onStartEdit: startEdit,
+        onRemoveTip: removeTip
+      }),
+    [startEdit, removeTip]
   );
 
   function setField(event) {
@@ -47,30 +38,10 @@ function TipsPanel({ tips, mutationStatus }) {
     setEditingPreviewImage("");
   }
 
-  function buildFormData() {
-    const formData = new FormData();
-
-    formData.append("title_en", form.title_en.trim());
-    formData.append("title_ar", form.title_ar.trim());
-    formData.append("description_en", form.description_en.trim());
-    formData.append("description_ar", form.description_ar.trim());
-    formData.append("type", form.type);
-
-    if (form.videoUrl.trim()) {
-      formData.append("videoUrl", form.videoUrl.trim());
-    }
-
-    if (imageFile) {
-      formData.append("image", imageFile);
-    }
-
-    return formData;
-  }
-
   async function handleSubmit(event) {
     event.preventDefault();
 
-    const formData = buildFormData();
+    const formData = buildTipFormData(form, imageFile);
 
     try {
       if (editingTipId) {
@@ -215,43 +186,7 @@ function TipsPanel({ tips, mutationStatus }) {
         <div className="h-[470px] w-full">
           <DataGrid
             rows={rows}
-            columns={[
-              { field: "title_en", headerName: "Title EN", minWidth: 180, flex: 1.1 },
-              { field: "title_ar", headerName: "Title AR", minWidth: 150, flex: 1 },
-              { field: "type", headerName: "Type", minWidth: 90, flex: 0.6 },
-              {
-                field: "createdAt",
-                headerName: "Created",
-                minWidth: 160,
-                flex: 1,
-                valueFormatter: (value) => formatDateTime(value)
-              },
-              {
-                field: "actions",
-                headerName: "Actions",
-                minWidth: 160,
-                flex: 1,
-                sortable: false,
-                renderCell: (params) => (
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => startEdit(params.row)}
-                      className="table-action-btn table-action-btn--primary"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => removeTip(params.row.id)}
-                      className="table-action-btn table-action-btn--danger"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                )
-              }
-            ]}
+            columns={columns}
             pageSizeOptions={[10, 20]}
             initialState={{
               pagination: {

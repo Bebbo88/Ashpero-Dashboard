@@ -1,17 +1,8 @@
 import { useEffect, useState } from "react";
 import { useAppDispatch } from "../../../app/hooks";
 import { updateSiteContent } from "../../../features/admin/adminSlice";
-import { parseLineSeparatedText, toLineSeparatedText } from "../../../utils/formatters";
-
-function appendTextArray(formData, key, values) {
-  for (const value of values) {
-    const trimmedValue = String(value || "").trim();
-
-    if (trimmedValue) {
-      formData.append(key, trimmedValue);
-    }
-  }
-}
+import { toLineSeparatedText } from "../../../utils/formatters";
+import { buildContentFormData } from "./helpers";
 
 function ContentPanel({ content, mutationStatus }) {
   const dispatch = useAppDispatch();
@@ -28,23 +19,11 @@ function ContentPanel({ content, mutationStatus }) {
   async function handleSubmit(event) {
     event.preventDefault();
 
-    const formData = new FormData();
-
-    for (const file of heroImageFiles) {
-      formData.append("heroImages", file);
-    }
-
-    for (const file of bannerFiles) {
-      formData.append("banners", file);
-    }
-
-    const marketingSections = parseLineSeparatedText(marketingSectionsText);
-
-    if (marketingSections.length === 0) {
-      formData.append("marketingSections", "");
-    } else {
-      appendTextArray(formData, "marketingSections", marketingSections);
-    }
+    const formData = buildContentFormData({
+      heroImageFiles,
+      bannerFiles,
+      marketingSectionsText
+    });
 
     try {
       await dispatch(updateSiteContent(formData)).unwrap();
