@@ -1,11 +1,11 @@
-﻿export function formatCurrency(value) {
+export function formatCurrency(value) {
   const numeric = Number(value || 0);
-
-  return new Intl.NumberFormat("ar-EG", {
-    style: "currency",
-    currency: "EGP",
+  const formattedNumber = new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: 0,
     maximumFractionDigits: 2
   }).format(numeric);
+
+  return `${formattedNumber} EGP`;
 }
 
 export function formatDateTime(value) {
