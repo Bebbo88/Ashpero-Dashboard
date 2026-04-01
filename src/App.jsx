@@ -1,9 +1,8 @@
-﻿import { useEffect, useState } from "react";
-import { Navigate, Outlet, Route, Routes } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Navigate, Route, Routes } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "./app/hooks";
-import Sidebar from "./components/layout/Sidebar";
-import TopBar from "./components/layout/TopBar";
 import LoginView from "./components/layout/LoginView";
+import DashboardLayout from "./components/layout/DashboardLayout";
 import OverviewPanel from "./components/dashboard/overview";
 import OrdersPanel from "./components/dashboard/orders";
 import ProductsPanel from "./components/dashboard/products/ProductsPanel";
@@ -21,55 +20,6 @@ import {
 } from "./features/admin/adminSlice";
 import { adminApi } from "./features/admin/state/api";
 import { getApiBaseUrl } from "./utils/apiClient";
-
-function DashboardLayout({
-  admin,
-  lastUpdatedAt,
-  snapshotStatus,
-  mutationStatus,
-  lastMessage,
-  error,
-  onRefresh,
-  onLogout,
-  onDismissError
-}) {
-  return (
-    <main className="mx-auto w-full max-w-[1650px] px-3 py-4 md:px-6 md:py-6">
-      <div className="grid gap-4 md:grid-cols-[18rem_1fr] md:items-start">
-        <Sidebar />
-
-        <section className="min-w-0">
-          <TopBar
-            admin={admin}
-            onRefresh={onRefresh}
-            onLogout={onLogout}
-            lastMessage={lastMessage}
-            snapshotStatus={snapshotStatus}
-            mutationStatus={mutationStatus}
-            lastUpdatedAt={lastUpdatedAt}
-          />
-
-          {error ? (
-            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              <div className="flex items-start justify-between gap-3">
-                <span>{error}</span>
-                <button
-                  type="button"
-                  className="text-xs font-semibold text-red-700 underline"
-                  onClick={onDismissError}
-                >
-                  dismiss
-                </button>
-              </div>
-            </div>
-          ) : null}
-
-          <Outlet />
-        </section>
-      </div>
-    </main>
-  );
-}
 
 function App() {
   const dispatch = useAppDispatch();

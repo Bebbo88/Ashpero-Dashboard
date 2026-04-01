@@ -2,46 +2,22 @@ import { useMemo, useState } from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import { useAppDispatch } from "../../../app/hooks";
 import { createCoupon, deleteCoupon, updateCoupon } from "../../../features/admin/adminSlice";
-import { formatDateTime } from "../../../utils/formatters";
-
-const INITIAL_FORM = {
-  code: "",
-  discountType: "percentage",
-  discountValue: "",
-  maxUsage: "",
-  usedCount: "0",
-  expiresAt: "",
-  isActive: true
-};
-
-function toDateInputValue(value) {
-  if (!value) {
-    return "";
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "";
-  }
-
-  return date.toISOString().slice(0, 10);
-}
+import { getCouponsColumns } from "./columns";
+import { INITIAL_FORM, buildCouponPayload, mapCouponRows, toDateInputValue } from "./helpers";
 
 function CouponsPanel({ coupons, mutationStatus }) {
   const dispatch = useAppDispatch();
   const [form, setForm] = useState(INITIAL_FORM);
   const [editingCouponId, setEditingCouponId] = useState("");
 
-  const rows = useMemo(
+  const rows = useMemo(() => mapCouponRows(coupons), [coupons]);
+  const columns = useMemo(
     () =>
-      [...coupons]
-        .sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt))
-        .map((coupon) => ({
-          id: coupon._id,
-          ...coupon
-        })),
-    [coupons]
+      getCouponsColumns({
+        onStartEdit: startEdit,
+        onRemoveCoupon: removeCoupon
+      }),
+    [startEdit, removeCoupon]
   );
 
   function setField(event) {
@@ -61,15 +37,7 @@ function CouponsPanel({ coupons, mutationStatus }) {
   async function handleSubmit(event) {
     event.preventDefault();
 
-    const body = {
-      code: form.code,
-      discountType: form.discountType,
-      discountValue: Number(form.discountValue),
-      maxUsage: Number(form.maxUsage),
-      usedCount: Number(form.usedCount),
-      expiresAt: form.expiresAt,
-      isActive: form.isActive
-    };
+    const body = buildCouponPayload(form);
 
     try {
       if (editingCouponId) {
@@ -202,52 +170,7 @@ function CouponsPanel({ coupons, mutationStatus }) {
         <div className="h-[480px] w-full">
           <DataGrid
             rows={rows}
-            columns={[
-              { field: "code", headerName: "Code", minWidth: 120, flex: 0.8 },
-              { field: "discountType", headerName: "Type", minWidth: 100, flex: 0.7 },
-              { field: "discountValue", headerName: "Value", minWidth: 90, flex: 0.6 },
-              { field: "maxUsage", headerName: "Max", minWidth: 80, flex: 0.6 },
-              { field: "usedCount", headerName: "Used", minWidth: 80, flex: 0.6 },
-              {
-                field: "expiresAt",
-                headerName: "Expires",
-                minWidth: 160,
-                flex: 1,
-                valueFormatter: (value) => formatDateTime(value)
-              },
-              {
-                field: "isActive",
-                headerName: "Active",
-                minWidth: 80,
-                flex: 0.6,
-                valueFormatter: (value) => (value ? "Yes" : "No")
-              },
-              {
-                field: "actions",
-                headerName: "Actions",
-                minWidth: 160,
-                flex: 1,
-                sortable: false,
-                renderCell: (params) => (
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => startEdit(params.row)}
-                      className="table-action-btn table-action-btn--primary"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => removeCoupon(params.row.id)}
-                      className="table-action-btn table-action-btn--danger"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                )
-              }
-            ]}
+            columns={columns}
             pageSizeOptions={[10, 20]}
             initialState={{
               pagination: {

@@ -2,69 +2,31 @@ import { useMemo, useState } from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import { useAppDispatch } from "../../../app/hooks";
 import { createOffer, deleteOffer, updateOffer } from "../../../features/admin/adminSlice";
-import { formatDateTime } from "../../../utils/formatters";
-
-const INITIAL_FORM = {
-  title_en: "",
-  title_ar: "",
-  discountType: "percentage",
-  discountValue: "",
-  startDate: "",
-  endDate: "",
-  productIds: [],
-  isActive: true
-};
-
-function toDateInputValue(value) {
-  if (!value) {
-    return "";
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "";
-  }
-
-  return date.toISOString().slice(0, 10);
-}
-
-function getProductLabel(product) {
-  const englishName = product?.name_en || product?.name || "";
-  const arabicName = product?.name_ar || "";
-
-  if (englishName && arabicName) {
-    return `${englishName} | ${arabicName}`;
-  }
-
-  return englishName || arabicName || "Unnamed Product";
-}
+import {
+  INITIAL_FORM,
+  buildOfferPayload,
+  getProductLabel,
+  getSortedProducts,
+  mapOfferRows,
+  normalizeOfferProductIds,
+  toDateInputValue
+} from "./helpers";
+import { getOffersColumns } from "./columns";
 
 function OffersPanel({ offers, products, mutationStatus }) {
   const dispatch = useAppDispatch();
   const [form, setForm] = useState(INITIAL_FORM);
   const [editingOfferId, setEditingOfferId] = useState("");
 
-  const availableProducts = useMemo(
+  const availableProducts = useMemo(() => getSortedProducts(products), [products]);
+  const rows = useMemo(() => mapOfferRows(offers), [offers]);
+  const columns = useMemo(
     () =>
-      [...products].sort((left, right) =>
-        getProductLabel(left).localeCompare(getProductLabel(right), "en", { sensitivity: "base" })
-      ),
-    [products]
-  );
-
-  const rows = useMemo(
-    () =>
-      [...offers]
-        .sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt))
-        .map((offer) => ({
-          id: offer._id,
-          ...offer,
-          title_en: offer.title_en || offer.title || "",
-          title_ar: offer.title_ar || "",
-          productsCount: Array.isArray(offer.productIds) ? offer.productIds.length : 0
-        })),
-    [offers]
+      getOffersColumns({
+        onStartEdit: startEdit,
+        onRemoveOffer: removeOffer
+      }),
+    [startEdit, removeOffer]
   );
 
   function setField(event) {
@@ -93,16 +55,7 @@ function OffersPanel({ offers, products, mutationStatus }) {
   async function handleSubmit(event) {
     event.preventDefault();
 
-    const body = {
-      title_en: form.title_en.trim(),
-      title_ar: form.title_ar.trim(),
-      discountType: form.discountType,
-      discountValue: Number(form.discountValue),
-      startDate: form.startDate,
-      endDate: form.endDate,
-      productIds: form.productIds,
-      isActive: form.isActive
-    };
+    const body = buildOfferPayload(form);
 
     try {
       if (editingOfferId) {
@@ -118,10 +71,6 @@ function OffersPanel({ offers, products, mutationStatus }) {
   }
 
   function startEdit(row) {
-    const ids = (row.productIds || []).map((entry) =>
-      typeof entry === "string" ? entry : entry?._id || entry?.id || ""
-    );
-
     setEditingOfferId(row.id);
     setForm({
       title_en: row.title_en || row.title || "",
@@ -130,7 +79,7 @@ function OffersPanel({ offers, products, mutationStatus }) {
       discountValue: row.discountValue ?? "",
       startDate: toDateInputValue(row.startDate),
       endDate: toDateInputValue(row.endDate),
-      productIds: ids.filter(Boolean),
+      productIds: normalizeOfferProductIds(row.productIds),
       isActive: Boolean(row.isActive)
     });
   }
@@ -262,59 +211,7 @@ function OffersPanel({ offers, products, mutationStatus }) {
         <div className="h-[480px] w-full">
           <DataGrid
             rows={rows}
-            columns={[
-              { field: "title_en", headerName: "Title EN", minWidth: 170, flex: 1 },
-              { field: "title_ar", headerName: "Title AR", minWidth: 170, flex: 1 },
-              { field: "discountType", headerName: "Type", minWidth: 100, flex: 0.7 },
-              { field: "discountValue", headerName: "Value", minWidth: 100, flex: 0.7 },
-              { field: "productsCount", headerName: "Products", minWidth: 100, flex: 0.6 },
-              {
-                field: "startDate",
-                headerName: "Start",
-                minWidth: 150,
-                flex: 1,
-                valueFormatter: (value) => formatDateTime(value)
-              },
-              {
-                field: "endDate",
-                headerName: "End",
-                minWidth: 150,
-                flex: 1,
-                valueFormatter: (value) => formatDateTime(value)
-              },
-              {
-                field: "isActive",
-                headerName: "Active",
-                minWidth: 80,
-                flex: 0.5,
-                valueFormatter: (value) => (value ? "Yes" : "No")
-              },
-              {
-                field: "actions",
-                headerName: "Actions",
-                minWidth: 160,
-                flex: 1,
-                sortable: false,
-                renderCell: (params) => (
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => startEdit(params.row)}
-                      className="table-action-btn table-action-btn--primary"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => removeOffer(params.row.id)}
-                      className="table-action-btn table-action-btn--danger"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                )
-              }
-            ]}
+            columns={columns}
             pageSizeOptions={[10, 20]}
             initialState={{
               pagination: {
