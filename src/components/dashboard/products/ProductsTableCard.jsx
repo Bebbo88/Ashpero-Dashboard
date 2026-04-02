@@ -111,6 +111,13 @@ function ProductsTableCard({
               valueFormatter: (value) => (value ? "Yes" : "No")
             },
             {
+              field: "isBestSeller",
+              headerName: "Best Seller",
+              minWidth: 110,
+              flex: 0.7,
+              valueFormatter: (value) => (value ? "Yes" : "No")
+            },
+            {
               field: "updatedAt",
               headerName: "Updated",
               minWidth: 170,

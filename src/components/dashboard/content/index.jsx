@@ -1,19 +1,18 @@
 import { useEffect, useState } from "react";
 import { useAppDispatch } from "../../../app/hooks";
 import { updateSiteContent } from "../../../features/admin/adminSlice";
-import { toLineSeparatedText } from "../../../utils/formatters";
 import { buildContentFormData } from "./helpers";
 
 function ContentPanel({ content, mutationStatus }) {
   const dispatch = useAppDispatch();
   const [heroImageFiles, setHeroImageFiles] = useState([]);
   const [bannerFiles, setBannerFiles] = useState([]);
-  const [marketingSectionsText, setMarketingSectionsText] = useState("");
+  const [spotlightImageFiles, setSpotlightImageFiles] = useState([]);
 
   useEffect(() => {
     setHeroImageFiles([]);
     setBannerFiles([]);
-    setMarketingSectionsText(toLineSeparatedText(content.marketingSections || []));
+    setSpotlightImageFiles([]);
   }, [content]);
 
   async function handleSubmit(event) {
@@ -22,13 +21,14 @@ function ContentPanel({ content, mutationStatus }) {
     const formData = buildContentFormData({
       heroImageFiles,
       bannerFiles,
-      marketingSectionsText
+      spotlightImageFiles
     });
 
     try {
       await dispatch(updateSiteContent(formData)).unwrap();
       setHeroImageFiles([]);
       setBannerFiles([]);
+      setSpotlightImageFiles([]);
     } catch (_error) {
       // Error state is surfaced through admin slice.
     }
@@ -40,7 +40,8 @@ function ContentPanel({ content, mutationStatus }) {
         <div className="mb-3">
           <h3 className="text-sm font-bold text-slate-900">Site Content Controls</h3>
           <p className="text-xs text-slate-500">
-            Upload hero and banner images as files. Existing images stay saved when you add new files.
+            Upload images for three controlled placements. Existing images stay saved when you add new
+            files.
           </p>
         </div>
         <form className="grid gap-3" onSubmit={handleSubmit}>
@@ -73,13 +74,17 @@ function ContentPanel({ content, mutationStatus }) {
           </label>
 
           <label className="text-sm font-semibold text-slate-700">
-            Marketing Sections (one entry per line)
-            <textarea
-              rows={5}
-              value={marketingSectionsText}
-              onChange={(event) => setMarketingSectionsText(event.target.value)}
-              className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+            Spotlight Images Upload (multiple files)
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={(event) => setSpotlightImageFiles(Array.from(event.target.files || []))}
+              className="file-upload-input mt-1.5"
             />
+            <span className="mt-1 block text-xs text-slate-500">
+              Selected: {spotlightImageFiles.length || 0} file(s)
+            </span>
           </label>
 
           <button
@@ -119,10 +124,10 @@ function ContentPanel({ content, mutationStatus }) {
 
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-              Marketing Sections
+              Spotlight Images
             </p>
             <ul className="mt-2 space-y-1 text-xs text-slate-700">
-              {(content.marketingSections || []).map((entry) => (
+              {(content.spotlightImages || []).map((entry) => (
                 <li key={entry} className="truncate">
                   {entry}
                 </li>
@@ -136,4 +141,3 @@ function ContentPanel({ content, mutationStatus }) {
 }
 
 export default ContentPanel;
-

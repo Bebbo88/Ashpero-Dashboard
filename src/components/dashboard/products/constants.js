@@ -9,5 +9,6 @@ export const INITIAL_FORM = {
   price: "",
   stock: "",
   sizes: [],
-  isActive: true
+  isActive: true,
+  isBestSeller: false
 };
