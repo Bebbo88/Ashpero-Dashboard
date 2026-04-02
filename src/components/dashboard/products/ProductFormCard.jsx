@@ -181,6 +181,15 @@ function ProductFormCard({
           <input type="checkbox" name="isActive" checked={form.isActive} onChange={onFieldChange} />
           Product is active
         </label>
+        <label className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700 md:col-span-2">
+          <input
+            type="checkbox"
+            name="isBestSeller"
+            checked={form.isBestSeller}
+            onChange={onFieldChange}
+          />
+          Mark as best seller
+        </label>
 
         <div className="flex flex-wrap gap-2 md:col-span-2">
           <button

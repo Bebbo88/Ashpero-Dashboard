@@ -25,7 +25,7 @@ const initialState = {
   content: {
     heroImages: [],
     banners: [],
-    marketingSections: []
+    spotlightImages: []
   }
 };
 

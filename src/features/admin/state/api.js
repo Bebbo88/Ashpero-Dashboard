@@ -5,7 +5,7 @@ import { getErrorMessage } from "./helpers";
 const EMPTY_CONTENT = {
   heroImages: [],
   banners: [],
-  marketingSections: []
+  spotlightImages: []
 };
 
 export const adminApi = createApi({
@@ -81,4 +81,3 @@ export const adminApi = createApi({
     })
   })
 });
-

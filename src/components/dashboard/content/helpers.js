@@ -1,16 +1,6 @@
 import { parseLineSeparatedText } from "../../../utils/formatters";
 
-function appendTextArray(formData, key, values) {
-  for (const value of values) {
-    const trimmedValue = String(value || "").trim();
-
-    if (trimmedValue) {
-      formData.append(key, trimmedValue);
-    }
-  }
-}
-
-export function buildContentFormData({ heroImageFiles, bannerFiles, marketingSectionsText }) {
+export function buildContentFormData({ heroImageFiles, bannerFiles, spotlightImageFiles }) {
   const formData = new FormData();
 
   for (const file of heroImageFiles) {
@@ -21,12 +11,8 @@ export function buildContentFormData({ heroImageFiles, bannerFiles, marketingSec
     formData.append("banners", file);
   }
 
-  const marketingSections = parseLineSeparatedText(marketingSectionsText);
-
-  if (marketingSections.length === 0) {
-    formData.append("marketingSections", "");
-  } else {
-    appendTextArray(formData, "marketingSections", marketingSections);
+  for (const file of spotlightImageFiles) {
+    formData.append("spotlightImages", file);
   }
 
   return formData;

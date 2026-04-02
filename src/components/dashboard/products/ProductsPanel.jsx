@@ -134,6 +134,7 @@ function ProductsPanel({ products, mutationStatus }) {
     formData.append("price", String(form.price).trim());
     formData.append("stock", String(form.stock).trim());
     formData.append("isActive", String(form.isActive));
+    formData.append("isBestSeller", String(form.isBestSeller));
 
     for (const size of form.sizes) {
       formData.append("sizes", size);
@@ -188,7 +189,8 @@ function ProductsPanel({ products, mutationStatus }) {
       price: row.price ?? "",
       stock: row.stock ?? "",
       sizes: Array.isArray(row.sizes) ? normalizeList(row.sizes) : [],
-      isActive: typeof row.isActive === "boolean" ? row.isActive : true
+      isActive: typeof row.isActive === "boolean" ? row.isActive : true,
+      isBestSeller: typeof row.isBestSeller === "boolean" ? row.isBestSeller : false
     });
 
     setCustomCategory("");
