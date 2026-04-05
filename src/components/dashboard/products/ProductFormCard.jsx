@@ -14,6 +14,7 @@ function ProductFormCard({
   onSizeDraftKeyDown,
   onAddSize,
   onRemoveSize,
+  onSizePriceChange,
   onImageFilesChange,
   onSubmit,
   onReset
@@ -25,7 +26,7 @@ function ProductFormCard({
           {editingProductId ? "Edit Product" : "Create Product"}
         </h3>
         <p className="text-xs text-slate-500">
-          English + Arabic product fields are required. Category is required. Sizes are optional.
+          English + Arabic fields are required (name, description, ingredients, how to use). Category is required. Sizes are optional.
         </p>
       </div>
 
@@ -62,6 +63,44 @@ function ProductFormCard({
           name="description_ar"
           placeholder="Description (Arabic)"
           value={form.description_ar}
+          onChange={onFieldChange}
+          required
+        />
+
+        <textarea
+          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm md:col-span-2"
+          rows={2}
+          name="ingredients_en"
+          placeholder="Ingredients (English)"
+          value={form.ingredients_en}
+          onChange={onFieldChange}
+          required
+        />
+        <textarea
+          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm md:col-span-2"
+          rows={2}
+          name="ingredients_ar"
+          placeholder="Ingredients (Arabic)"
+          value={form.ingredients_ar}
+          onChange={onFieldChange}
+          required
+        />
+
+        <textarea
+          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm md:col-span-2"
+          rows={2}
+          name="howToUse_en"
+          placeholder="How To Use (English)"
+          value={form.howToUse_en}
+          onChange={onFieldChange}
+          required
+        />
+        <textarea
+          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm md:col-span-2"
+          rows={2}
+          name="howToUse_ar"
+          placeholder="How To Use (Arabic)"
+          value={form.howToUse_ar}
           onChange={onFieldChange}
           required
         />
@@ -141,18 +180,47 @@ function ProductFormCard({
             </button>
           </div>
           {form.sizes.length > 0 ? (
-            <div className="mt-2 flex flex-wrap gap-2">
-              {form.sizes.map((size) => (
-                <button
-                  key={size}
-                  type="button"
-                  onClick={() => onRemoveSize(size)}
-                  className="rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-700"
-                  title="Remove size"
-                >
-                  {size} x
-                </button>
-              ))}
+            <div className="mt-2 space-y-2">
+              <div className="flex flex-wrap gap-2">
+                {form.sizes.map((size) => (
+                  <button
+                    key={size}
+                    type="button"
+                    onClick={() => onRemoveSize(size)}
+                    className="rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-700"
+                    title="Remove size"
+                  >
+                    {size} x
+                  </button>
+                ))}
+              </div>
+              <div className="grid gap-2 md:grid-cols-2">
+                {form.sizes.map((size) => {
+                  const row = form.sizePrices.find((entry) => entry.size === size) || {
+                    size,
+                    price: ""
+                  };
+
+                  return (
+                    <label
+                      key={`${size}-price`}
+                      className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700"
+                    >
+                      {`Price for ${size}`}
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={row.price}
+                        onChange={(event) => onSizePriceChange(size, event.target.value)}
+                        className="mt-1 w-full rounded-md border border-slate-200 px-2 py-1 text-sm font-normal"
+                        placeholder="0.00"
+                        required
+                      />
+                    </label>
+                  );
+                })}
+              </div>
             </div>
           ) : (
             <p className="mt-2 text-[11px] text-slate-500">No sizes added yet.</p>
