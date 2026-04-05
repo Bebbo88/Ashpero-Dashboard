@@ -11,6 +11,21 @@ import { normalizeList } from "./helpers";
 import ProductFormCard from "./ProductFormCard";
 import ProductsTableCard from "./ProductsTableCard";
 
+function syncSizePricesWithSizes(sizePrices = [], sizes = []) {
+  const nextSizes = normalizeList(sizes);
+
+  return nextSizes.map((size) => {
+    const existing = (sizePrices || []).find(
+      (entry) => String(entry.size || "").trim().toLowerCase() === size.toLowerCase()
+    );
+
+    return {
+      size,
+      price: existing?.price ?? ""
+    };
+  });
+}
+
 function ProductsPanel({ products, mutationStatus }) {
   const dispatch = useAppDispatch();
   const [form, setForm] = useState(INITIAL_FORM);
@@ -34,7 +49,13 @@ function ProductsPanel({ products, mutationStatus }) {
         .map((product) => ({
           id: product._id,
           ...product,
-          sizes: Array.isArray(product.sizes) ? normalizeList(product.sizes) : []
+          sizes: Array.isArray(product.sizes) ? normalizeList(product.sizes) : [],
+          sizePrices: Array.isArray(product.sizePrices)
+            ? product.sizePrices.map((entry) => ({
+                size: String(entry?.size || "").trim(),
+                price: entry?.price ?? ""
+              }))
+            : []
         })),
     [products]
   );
@@ -109,16 +130,37 @@ function ProductsPanel({ products, mutationStatus }) {
       const nextSizes = normalizeList([...previous.sizes, sizeValue]);
       return {
         ...previous,
-        sizes: nextSizes
+        sizes: nextSizes,
+        sizePrices: syncSizePricesWithSizes(previous.sizePrices, nextSizes)
       };
     });
     setSizeDraft("");
   }
 
   function removeSize(sizeToRemove) {
+    setForm((previous) => {
+      const nextSizes = previous.sizes.filter((size) => size !== sizeToRemove);
+      return {
+        ...previous,
+        sizes: nextSizes,
+        sizePrices: syncSizePricesWithSizes(previous.sizePrices, nextSizes)
+      };
+    });
+  }
+
+  function changeSizePrice(size, value) {
+    const nextValue = value === "" ? "" : String(value);
+
     setForm((previous) => ({
       ...previous,
-      sizes: previous.sizes.filter((size) => size !== sizeToRemove)
+      sizePrices: previous.sizePrices.map((entry) =>
+        entry.size === size
+          ? {
+              ...entry,
+              price: nextValue
+            }
+          : entry
+      )
     }));
   }
 
@@ -130,6 +172,10 @@ function ProductsPanel({ products, mutationStatus }) {
     formData.append("name_ar", form.name_ar.trim());
     formData.append("description_en", form.description_en.trim());
     formData.append("description_ar", form.description_ar.trim());
+    formData.append("ingredients_en", form.ingredients_en.trim());
+    formData.append("ingredients_ar", form.ingredients_ar.trim());
+    formData.append("howToUse_en", form.howToUse_en.trim());
+    formData.append("howToUse_ar", form.howToUse_ar.trim());
     formData.append("category", categoryValue);
     formData.append("price", String(form.price).trim());
     formData.append("stock", String(form.stock).trim());
@@ -139,6 +185,15 @@ function ProductsPanel({ products, mutationStatus }) {
     for (const size of form.sizes) {
       formData.append("sizes", size);
     }
+
+    const sizePricesPayload = form.sizePrices
+      .map((entry) => ({
+        size: String(entry.size || "").trim(),
+        price: Number(entry.price)
+      }))
+      .filter((entry) => entry.size && Number.isFinite(entry.price));
+
+    formData.append("sizePrices", JSON.stringify(sizePricesPayload));
 
     for (const file of productImageFiles) {
       formData.append("images", file);
@@ -153,6 +208,13 @@ function ProductsPanel({ products, mutationStatus }) {
     const categoryValue = resolveCategory();
 
     if (!categoryValue) {
+      return;
+    }
+
+    if (
+      form.sizes.length > 0 &&
+      form.sizePrices.some((entry) => entry.price === "" || Number(entry.price) < 0 || Number.isNaN(Number(entry.price)))
+    ) {
       return;
     }
 
@@ -185,10 +247,18 @@ function ProductsPanel({ products, mutationStatus }) {
       name_ar: row.name_ar || "",
       description_en: row.description_en || row.description || "",
       description_ar: row.description_ar || "",
+      ingredients_en: row.ingredients_en || "",
+      ingredients_ar: row.ingredients_ar || "",
+      howToUse_en: row.howToUse_en || "",
+      howToUse_ar: row.howToUse_ar || "",
       category: rowCategory,
       price: row.price ?? "",
       stock: row.stock ?? "",
       sizes: Array.isArray(row.sizes) ? normalizeList(row.sizes) : [],
+      sizePrices: syncSizePricesWithSizes(
+        Array.isArray(row.sizePrices) ? row.sizePrices : [],
+        Array.isArray(row.sizes) ? normalizeList(row.sizes) : []
+      ),
       isActive: typeof row.isActive === "boolean" ? row.isActive : true,
       isBestSeller: typeof row.isBestSeller === "boolean" ? row.isBestSeller : false
     });
@@ -256,6 +326,7 @@ function ProductsPanel({ products, mutationStatus }) {
         }}
         onAddSize={addSize}
         onRemoveSize={removeSize}
+        onSizePriceChange={changeSizePrice}
         onImageFilesChange={(event) => setProductImageFiles(Array.from(event.target.files || []))}
         onSubmit={handleSubmit}
         onReset={resetForm}

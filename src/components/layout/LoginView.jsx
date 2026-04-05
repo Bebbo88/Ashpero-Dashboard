@@ -1,11 +1,14 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import LockOpenRoundedIcon from "@mui/icons-material/LockOpenRounded";
+import VisibilityRoundedIcon from "@mui/icons-material/VisibilityRounded";
+import VisibilityOffRoundedIcon from "@mui/icons-material/VisibilityOffRounded";
 
 function LoginView({ onSubmit, status, error, apiBaseUrl }) {
   const [credentials, setCredentials] = useState({
     email: "",
     password: "",
   });
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
   const isLoading = status === "loading";
 
@@ -60,14 +63,28 @@ function LoginView({ onSubmit, status, error, apiBaseUrl }) {
 
             <label className="block text-sm font-semibold text-slate-800">
               Password
-              <input
-                type="password"
-                name="password"
-                value={credentials.password}
-                onChange={handleChange}
-                required
-                className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none ring-teal-400 transition focus:ring"
-              />
+              <div className="relative mt-1.5">
+                <input
+                  type={isPasswordVisible ? "text" : "password"}
+                  name="password"
+                  value={credentials.password}
+                  onChange={handleChange}
+                  required
+                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 pr-10 text-sm outline-none ring-teal-400 transition focus:ring"
+                />
+                <button
+                  type="button"
+                  onClick={() => setIsPasswordVisible((previous) => !previous)}
+                  className="absolute inset-y-0 right-0 inline-flex items-center px-3 text-slate-500 transition hover:text-slate-700"
+                  aria-label={isPasswordVisible ? "Hide password" : "Show password"}
+                >
+                  {isPasswordVisible ? (
+                    <VisibilityOffRoundedIcon sx={{ fontSize: 18 }} />
+                  ) : (
+                    <VisibilityRoundedIcon sx={{ fontSize: 18 }} />
+                  )}
+                </button>
+              </div>
             </label>
           </div>
 
