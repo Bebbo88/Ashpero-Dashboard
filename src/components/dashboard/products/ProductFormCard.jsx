@@ -7,6 +7,8 @@ function ProductFormCard({
   customCategory,
   sizeDraft,
   categoryOptions,
+  productTypeOptions,
+  skinTypeOptions,
   onFieldChange,
   onCategoryChange,
   onCustomCategoryChange,
@@ -15,6 +17,8 @@ function ProductFormCard({
   onAddSize,
   onRemoveSize,
   onSizePriceChange,
+  onToggleProductType,
+  onToggleSkinType,
   onImageFilesChange,
   onSubmit,
   onReset
@@ -137,6 +141,52 @@ function ProductFormCard({
         ) : (
           <div className="hidden md:block" />
         )}
+
+        <div className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">
+          <p className="text-xs font-semibold text-slate-600">Product Type</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {productTypeOptions.map((option) => {
+              const checked = form.productType.includes(option);
+
+              return (
+                <label
+                  key={option}
+                  className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1 text-xs font-medium text-slate-700"
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => onToggleProductType(option)}
+                  />
+                  {option}
+                </label>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">
+          <p className="text-xs font-semibold text-slate-600">Skin Type</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {skinTypeOptions.map((option) => {
+              const checked = form.skinType.includes(option);
+
+              return (
+                <label
+                  key={option}
+                  className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1 text-xs font-medium text-slate-700"
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => onToggleSkinType(option)}
+                  />
+                  {option}
+                </label>
+              );
+            })}
+          </div>
+        </div>
 
         <input
           className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"

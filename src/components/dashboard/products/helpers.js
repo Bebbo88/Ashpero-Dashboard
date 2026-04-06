@@ -1,4 +1,4 @@
-export function normalizeList(values = []) {
+﻿export function normalizeList(values = []) {
   return values
     .map((value) => String(value || "").trim())
     .filter(Boolean)
@@ -13,4 +13,12 @@ export function formatSizes(sizes) {
   }
 
   return sizes.join(", ");
+}
+
+export function formatList(values) {
+  if (!Array.isArray(values) || values.length === 0) {
+    return "-";
+  }
+
+  return values.join(", ");
 }

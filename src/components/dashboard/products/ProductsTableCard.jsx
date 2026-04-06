@@ -1,13 +1,19 @@
 import { DataGrid } from "@mui/x-data-grid";
 import { formatCurrency, formatDateTime } from "../../../utils/formatters";
-import { formatSizes } from "./helpers";
+import { formatList, formatSizes } from "./helpers";
 
 function ProductsTableCard({
   filteredRows,
   tableCategories,
+  tableProductTypes,
+  tableSkinTypes,
   categoryFilter,
+  productTypeFilter,
+  skinTypeFilter,
   stockDraft,
   onCategoryFilterChange,
+  onProductTypeFilterChange,
+  onSkinTypeFilterChange,
   onChangeStockDraft,
   onSaveStock,
   onStartEdit,
@@ -18,24 +24,58 @@ function ProductsTableCard({
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h3 className="text-sm font-bold text-slate-900">Products</h3>
-          <p className="text-xs text-slate-500">Edit, delete, patch stock, and filter by category.</p>
+          <p className="text-xs text-slate-500">Edit, delete, patch stock, and filter by category, product type, and skin type.</p>
         </div>
 
-        <label className="text-xs font-semibold text-slate-600">
-          Filter by category
-          <select
-            value={categoryFilter}
-            onChange={onCategoryFilterChange}
-            className="ml-2 rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs"
-          >
-            <option value="all">All categories</option>
-            {tableCategories.map((categoryOption) => (
-              <option key={categoryOption} value={categoryOption}>
-                {categoryOption}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="text-xs font-semibold text-slate-600">
+            Category
+            <select
+              value={categoryFilter}
+              onChange={onCategoryFilterChange}
+              className="ml-2 rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs"
+            >
+              <option value="all">All</option>
+              {tableCategories.map((categoryOption) => (
+                <option key={categoryOption} value={categoryOption}>
+                  {categoryOption}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="text-xs font-semibold text-slate-600">
+            Product Type
+            <select
+              value={productTypeFilter}
+              onChange={onProductTypeFilterChange}
+              className="ml-2 rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs"
+            >
+              <option value="all">All</option>
+              {tableProductTypes.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="text-xs font-semibold text-slate-600">
+            Skin Type
+            <select
+              value={skinTypeFilter}
+              onChange={onSkinTypeFilterChange}
+              className="ml-2 rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs"
+            >
+              <option value="all">All</option>
+              {tableSkinTypes.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
       </div>
 
       <div className="h-[560px] w-full">
@@ -68,6 +108,26 @@ function ProductsTableCard({
               sortable: false,
               renderCell: (params) => (
                 <span className="truncate text-xs text-slate-700">{formatSizes(params.row.sizes)}</span>
+              )
+            },
+            {
+              field: "productType",
+              headerName: "Product Type",
+              minWidth: 160,
+              flex: 1,
+              sortable: false,
+              renderCell: (params) => (
+                <span className="truncate text-xs text-slate-700">{formatList(params.row.productType)}</span>
+              )
+            },
+            {
+              field: "skinType",
+              headerName: "Skin Type",
+              minWidth: 160,
+              flex: 1,
+              sortable: false,
+              renderCell: (params) => (
+                <span className="truncate text-xs text-slate-700">{formatList(params.row.skinType)}</span>
               )
             },
             {
