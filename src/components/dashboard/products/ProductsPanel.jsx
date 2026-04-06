@@ -6,7 +6,12 @@ import {
   updateProduct,
   updateProductStock
 } from "../../../features/admin/adminSlice";
-import { DEFAULT_CATEGORIES, INITIAL_FORM } from "./constants";
+import {
+  DEFAULT_CATEGORIES,
+  DEFAULT_PRODUCT_TYPES,
+  DEFAULT_SKIN_TYPES,
+  INITIAL_FORM
+} from "./constants";
 import { normalizeList } from "./helpers";
 import ProductFormCard from "./ProductFormCard";
 import ProductsTableCard from "./ProductsTableCard";
@@ -38,6 +43,8 @@ function ProductsPanel({ products, mutationStatus }) {
   const [customCategory, setCustomCategory] = useState("");
   const [sizeDraft, setSizeDraft] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [productTypeFilter, setProductTypeFilter] = useState("all");
+  const [skinTypeFilter, setSkinTypeFilter] = useState("all");
 
   const rows = useMemo(
     () =>
@@ -50,6 +57,8 @@ function ProductsPanel({ products, mutationStatus }) {
           id: product._id,
           ...product,
           sizes: Array.isArray(product.sizes) ? normalizeList(product.sizes) : [],
+          productType: Array.isArray(product.productType) ? normalizeList(product.productType) : [],
+          skinType: Array.isArray(product.skinType) ? normalizeList(product.skinType) : [],
           sizePrices: Array.isArray(product.sizePrices)
             ? product.sizePrices.map((entry) => ({
                 size: String(entry?.size || "").trim(),
@@ -64,21 +73,58 @@ function ProductsPanel({ products, mutationStatus }) {
     const productCategories = products.map((product) => product.category);
     return normalizeList([...DEFAULT_CATEGORIES, ...productCategories]);
   }, [products]);
+  const productTypeOptions = useMemo(() => {
+    const existingValues = products.flatMap((product) =>
+      Array.isArray(product.productType) ? product.productType : []
+    );
+    return normalizeList([...DEFAULT_PRODUCT_TYPES, ...existingValues]);
+  }, [products]);
+  const skinTypeOptions = useMemo(() => {
+    const existingValues = products.flatMap((product) =>
+      Array.isArray(product.skinType) ? product.skinType : []
+    );
+    return normalizeList([...DEFAULT_SKIN_TYPES, ...existingValues]);
+  }, [products]);
 
   const tableCategories = useMemo(
     () => normalizeList(rows.map((row) => row.category)),
     [rows]
   );
+  const tableProductTypes = useMemo(
+    () => normalizeList(rows.flatMap((row) => (Array.isArray(row.productType) ? row.productType : []))),
+    [rows]
+  );
+  const tableSkinTypes = useMemo(
+    () => normalizeList(rows.flatMap((row) => (Array.isArray(row.skinType) ? row.skinType : []))),
+    [rows]
+  );
 
   const filteredRows = useMemo(() => {
-    if (categoryFilter === "all") {
-      return rows;
-    }
+    return rows.filter((row) => {
+      if (
+        categoryFilter !== "all" &&
+        String(row.category || "").trim().toLowerCase() !== categoryFilter.toLowerCase()
+      ) {
+        return false;
+      }
 
-    return rows.filter(
-      (row) => String(row.category || "").trim().toLowerCase() === categoryFilter.toLowerCase()
-    );
-  }, [rows, categoryFilter]);
+      if (
+        productTypeFilter !== "all" &&
+        !row.productType.some((entry) => String(entry || "").toLowerCase() === productTypeFilter.toLowerCase())
+      ) {
+        return false;
+      }
+
+      if (
+        skinTypeFilter !== "all" &&
+        !row.skinType.some((entry) => String(entry || "").toLowerCase() === skinTypeFilter.toLowerCase())
+      ) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [rows, categoryFilter, productTypeFilter, skinTypeFilter]);
 
   function resetForm() {
     setForm(INITIAL_FORM);
@@ -164,6 +210,21 @@ function ProductsPanel({ products, mutationStatus }) {
     }));
   }
 
+  function toggleArrayField(fieldName, option) {
+    setForm((previous) => {
+      const currentValues = Array.isArray(previous[fieldName]) ? previous[fieldName] : [];
+      const exists = currentValues.some((entry) => entry.toLowerCase() === option.toLowerCase());
+      const nextValues = exists
+        ? currentValues.filter((entry) => entry.toLowerCase() !== option.toLowerCase())
+        : [...currentValues, option];
+
+      return {
+        ...previous,
+        [fieldName]: normalizeList(nextValues)
+      };
+    });
+  }
+
   function buildFormData() {
     const formData = new FormData();
     const categoryValue = resolveCategory();
@@ -177,6 +238,12 @@ function ProductsPanel({ products, mutationStatus }) {
     formData.append("howToUse_en", form.howToUse_en.trim());
     formData.append("howToUse_ar", form.howToUse_ar.trim());
     formData.append("category", categoryValue);
+    for (const value of form.productType) {
+      formData.append("productType", value);
+    }
+    for (const value of form.skinType) {
+      formData.append("skinType", value);
+    }
     formData.append("price", String(form.price).trim());
     formData.append("stock", String(form.stock).trim());
     formData.append("isActive", String(form.isActive));
@@ -252,6 +319,8 @@ function ProductsPanel({ products, mutationStatus }) {
       howToUse_en: row.howToUse_en || "",
       howToUse_ar: row.howToUse_ar || "",
       category: rowCategory,
+      productType: Array.isArray(row.productType) ? normalizeList(row.productType) : [],
+      skinType: Array.isArray(row.skinType) ? normalizeList(row.skinType) : [],
       price: row.price ?? "",
       stock: row.stock ?? "",
       sizes: Array.isArray(row.sizes) ? normalizeList(row.sizes) : [],
@@ -314,6 +383,8 @@ function ProductsPanel({ products, mutationStatus }) {
         customCategory={customCategory}
         sizeDraft={sizeDraft}
         categoryOptions={categoryOptions}
+        productTypeOptions={productTypeOptions}
+        skinTypeOptions={skinTypeOptions}
         onFieldChange={onFieldChange}
         onCategoryChange={onCategoryChange}
         onCustomCategoryChange={(event) => setCustomCategory(event.target.value)}
@@ -327,6 +398,8 @@ function ProductsPanel({ products, mutationStatus }) {
         onAddSize={addSize}
         onRemoveSize={removeSize}
         onSizePriceChange={changeSizePrice}
+        onToggleProductType={(option) => toggleArrayField("productType", option)}
+        onToggleSkinType={(option) => toggleArrayField("skinType", option)}
         onImageFilesChange={(event) => setProductImageFiles(Array.from(event.target.files || []))}
         onSubmit={handleSubmit}
         onReset={resetForm}
@@ -335,9 +408,15 @@ function ProductsPanel({ products, mutationStatus }) {
       <ProductsTableCard
         filteredRows={filteredRows}
         tableCategories={tableCategories}
+        tableProductTypes={tableProductTypes}
+        tableSkinTypes={tableSkinTypes}
         categoryFilter={categoryFilter}
+        productTypeFilter={productTypeFilter}
+        skinTypeFilter={skinTypeFilter}
         stockDraft={stockDraft}
         onCategoryFilterChange={(event) => setCategoryFilter(event.target.value)}
+        onProductTypeFilterChange={(event) => setProductTypeFilter(event.target.value)}
+        onSkinTypeFilterChange={(event) => setSkinTypeFilter(event.target.value)}
         onChangeStockDraft={changeStockDraft}
         onSaveStock={saveStock}
         onStartEdit={startEdit}
