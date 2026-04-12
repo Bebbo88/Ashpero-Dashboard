@@ -1,10 +1,15 @@
 export const INITIAL_FORM = {
-  title_en: "",
-  title_ar: "",
-  description_en: "",
-  description_ar: "",
-  type: "image",
-  videoUrl: ""
+  videoTitle_en: "",
+  videoTitle_ar: "",
+  videoUrl: "",
+  primaryTitle_en: "",
+  primaryTitle_ar: "",
+  primaryDescription_en: "",
+  primaryDescription_ar: "",
+  secondaryTitle_en: "",
+  secondaryTitle_ar: "",
+  secondaryDescription_en: "",
+  secondaryDescription_ar: ""
 };
 
 export function mapTipsRows(tips) {
@@ -16,21 +21,37 @@ export function mapTipsRows(tips) {
     }));
 }
 
-export function buildTipFormData(form, imageFile) {
+export function buildTipFormData(form, mediaFiles) {
   const formData = new FormData();
 
-  formData.append("title_en", form.title_en.trim());
-  formData.append("title_ar", form.title_ar.trim());
-  formData.append("description_en", form.description_en.trim());
-  formData.append("description_ar", form.description_ar.trim());
-  formData.append("type", form.type);
+  const textFields = [
+    "videoTitle_en",
+    "videoTitle_ar",
+    "videoUrl",
+    "primaryTitle_en",
+    "primaryTitle_ar",
+    "primaryDescription_en",
+    "primaryDescription_ar",
+    "secondaryTitle_en",
+    "secondaryTitle_ar",
+    "secondaryDescription_en",
+    "secondaryDescription_ar"
+  ];
 
-  if (form.videoUrl.trim()) {
-    formData.append("videoUrl", form.videoUrl.trim());
+  textFields.forEach((fieldName) => {
+    formData.append(fieldName, String(form[fieldName] || "").trim());
+  });
+
+  if (mediaFiles.videoFile) {
+    formData.append("videoFile", mediaFiles.videoFile);
   }
 
-  if (imageFile) {
-    formData.append("image", imageFile);
+  if (mediaFiles.primaryImage) {
+    formData.append("primaryImage", mediaFiles.primaryImage);
+  }
+
+  if (mediaFiles.secondaryImage) {
+    formData.append("secondaryImage", mediaFiles.secondaryImage);
   }
 
   return formData;
