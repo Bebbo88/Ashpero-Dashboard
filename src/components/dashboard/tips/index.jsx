@@ -5,12 +5,24 @@ import { createTip, deleteTip, updateTip } from "../../../features/admin/adminSl
 import { getTipsColumns } from "./columns";
 import { buildTipFormData, INITIAL_FORM, mapTipsRows } from "./helpers";
 
+const EMPTY_MEDIA_FILES = {
+  videoFile: null,
+  primaryImage: null,
+  secondaryImage: null
+};
+
+const EMPTY_PREVIEW_MEDIA = {
+  videoUrl: "",
+  primaryImage: "",
+  secondaryImage: ""
+};
+
 function TipsPanel({ tips, mutationStatus }) {
   const dispatch = useAppDispatch();
   const [form, setForm] = useState(INITIAL_FORM);
-  const [imageFile, setImageFile] = useState(null);
+  const [mediaFiles, setMediaFiles] = useState(EMPTY_MEDIA_FILES);
   const [editingTipId, setEditingTipId] = useState("");
-  const [editingPreviewImage, setEditingPreviewImage] = useState("");
+  const [editingPreviewMedia, setEditingPreviewMedia] = useState(EMPTY_PREVIEW_MEDIA);
 
   const rows = useMemo(() => mapTipsRows(tips), [tips]);
   const columns = useMemo(
@@ -31,17 +43,24 @@ function TipsPanel({ tips, mutationStatus }) {
     }));
   }
 
+  function setMediaField(fieldName, file) {
+    setMediaFiles((previous) => ({
+      ...previous,
+      [fieldName]: file
+    }));
+  }
+
   function resetForm() {
     setForm(INITIAL_FORM);
-    setImageFile(null);
+    setMediaFiles(EMPTY_MEDIA_FILES);
     setEditingTipId("");
-    setEditingPreviewImage("");
+    setEditingPreviewMedia(EMPTY_PREVIEW_MEDIA);
   }
 
   async function handleSubmit(event) {
     event.preventDefault();
 
-    const formData = buildTipFormData(form, imageFile);
+    const formData = buildTipFormData(form, mediaFiles);
 
     try {
       if (editingTipId) {
@@ -58,15 +77,25 @@ function TipsPanel({ tips, mutationStatus }) {
 
   function startEdit(row) {
     setEditingTipId(row.id);
-    setImageFile(null);
-    setEditingPreviewImage(row.image || "");
+    setMediaFiles(EMPTY_MEDIA_FILES);
+    setEditingPreviewMedia({
+      videoUrl: row.videoUrl || "",
+      primaryImage: row.primaryImage || "",
+      secondaryImage: row.secondaryImage || ""
+    });
+
     setForm({
-      title_en: row.title_en || "",
-      title_ar: row.title_ar || "",
-      description_en: row.description_en || "",
-      description_ar: row.description_ar || "",
-      type: row.type || "image",
-      videoUrl: row.videoUrl || ""
+      videoTitle_en: row.videoTitle_en || "",
+      videoTitle_ar: row.videoTitle_ar || "",
+      videoUrl: row.videoUrl || "",
+      primaryTitle_en: row.primaryTitle_en || "",
+      primaryTitle_ar: row.primaryTitle_ar || "",
+      primaryDescription_en: row.primaryDescription_en || "",
+      primaryDescription_ar: row.primaryDescription_ar || "",
+      secondaryTitle_en: row.secondaryTitle_en || "",
+      secondaryTitle_ar: row.secondaryTitle_ar || "",
+      secondaryDescription_en: row.secondaryDescription_en || "",
+      secondaryDescription_ar: row.secondaryDescription_ar || ""
     });
   }
 
@@ -83,78 +112,146 @@ function TipsPanel({ tips, mutationStatus }) {
       <article className="panel p-4">
         <div className="mb-3">
           <h3 className="text-sm font-bold text-slate-900">
-            {editingTipId ? "Edit Tip" : "Create Tip"}
+            {editingTipId ? "Edit Tip Container" : "Create Tip Container"}
           </h3>
           <p className="text-xs text-slate-500">
-            Tip images are uploaded as files. Use video URL when type is video.
+            Each tip includes one video section and two image sections in one container.
           </p>
         </div>
+
         <form className="grid gap-3 md:grid-cols-2" onSubmit={handleSubmit}>
+          <h4 className="md:col-span-2 text-xs font-bold uppercase tracking-wide text-slate-600">
+            Video Section
+          </h4>
           <input
-            name="title_en"
-            value={form.title_en}
+            name="videoTitle_en"
+            value={form.videoTitle_en}
             onChange={setField}
-            placeholder="Title EN"
+            placeholder="Video Title EN"
             required
             className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
           />
           <input
-            name="title_ar"
-            value={form.title_ar}
+            name="videoTitle_ar"
+            value={form.videoTitle_ar}
             onChange={setField}
-            placeholder="Title AR"
+            placeholder="Video Title AR"
             className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
           />
-          <textarea
-            name="description_en"
-            value={form.description_en}
-            onChange={setField}
-            placeholder="Description EN"
-            rows={2}
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
-          />
-          <textarea
-            name="description_ar"
-            value={form.description_ar}
-            onChange={setField}
-            placeholder="Description AR"
-            rows={2}
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
-          />
-
-          <select
-            name="type"
-            value={form.type}
-            onChange={setField}
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
-          >
-            <option value="image">image</option>
-            <option value="video">video</option>
-          </select>
-
-          <label className="text-xs font-semibold text-slate-600">
-            Tip Image File
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(event) => setImageFile(event.target.files?.[0] || null)}
-              required={form.type === "image" && !editingTipId}
-              className="file-upload-input mt-1"
-            />
-          </label>
-
           <input
             name="videoUrl"
             value={form.videoUrl}
             onChange={setField}
-            placeholder="Video URL"
+            placeholder="Video URL (optional when uploading file)"
             className="rounded-lg border border-slate-300 px-3 py-2 text-sm md:col-span-2"
           />
+          <label className="text-xs font-semibold text-slate-600 md:col-span-2">
+            Video File
+            <input
+              type="file"
+              accept="video/*"
+              onChange={(event) => setMediaField("videoFile", event.target.files?.[0] || null)}
+              required={!editingTipId && !form.videoUrl.trim()}
+              className="file-upload-input mt-1"
+            />
+          </label>
+
+          <h4 className="md:col-span-2 mt-2 text-xs font-bold uppercase tracking-wide text-slate-600">
+            First Image Card
+          </h4>
+          <input
+            name="primaryTitle_en"
+            value={form.primaryTitle_en}
+            onChange={setField}
+            placeholder="Image 1 Title EN"
+            required
+            className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+          />
+          <input
+            name="primaryTitle_ar"
+            value={form.primaryTitle_ar}
+            onChange={setField}
+            placeholder="Image 1 Title AR"
+            className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+          />
+          <textarea
+            name="primaryDescription_en"
+            value={form.primaryDescription_en}
+            onChange={setField}
+            placeholder="Image 1 Details EN"
+            rows={2}
+            className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+          />
+          <textarea
+            name="primaryDescription_ar"
+            value={form.primaryDescription_ar}
+            onChange={setField}
+            placeholder="Image 1 Details AR"
+            rows={2}
+            className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+          />
+          <label className="text-xs font-semibold text-slate-600 md:col-span-2">
+            First Image File
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(event) => setMediaField("primaryImage", event.target.files?.[0] || null)}
+              required={!editingTipId}
+              className="file-upload-input mt-1"
+            />
+          </label>
+
+          <h4 className="md:col-span-2 mt-2 text-xs font-bold uppercase tracking-wide text-slate-600">
+            Second Image Card
+          </h4>
+          <input
+            name="secondaryTitle_en"
+            value={form.secondaryTitle_en}
+            onChange={setField}
+            placeholder="Image 2 Title EN"
+            required
+            className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+          />
+          <input
+            name="secondaryTitle_ar"
+            value={form.secondaryTitle_ar}
+            onChange={setField}
+            placeholder="Image 2 Title AR"
+            className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+          />
+          <textarea
+            name="secondaryDescription_en"
+            value={form.secondaryDescription_en}
+            onChange={setField}
+            placeholder="Image 2 Details EN"
+            rows={2}
+            className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+          />
+          <textarea
+            name="secondaryDescription_ar"
+            value={form.secondaryDescription_ar}
+            onChange={setField}
+            placeholder="Image 2 Details AR"
+            rows={2}
+            className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+          />
+          <label className="text-xs font-semibold text-slate-600 md:col-span-2">
+            Second Image File
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(event) => setMediaField("secondaryImage", event.target.files?.[0] || null)}
+              required={!editingTipId}
+              className="file-upload-input mt-1"
+            />
+          </label>
 
           {editingTipId ? (
-            <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 md:col-span-2">
-              Current image: {editingPreviewImage || "None"}
-            </p>
+            <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 md:col-span-2 space-y-1">
+              <p>Current video: {editingPreviewMedia.videoUrl || "None"}</p>
+              <p>Current first image: {editingPreviewMedia.primaryImage || "None"}</p>
+              <p>Current second image: {editingPreviewMedia.secondaryImage || "None"}</p>
+            </div>
           ) : null}
 
           <div className="flex flex-wrap gap-2 md:col-span-2">
@@ -181,7 +278,7 @@ function TipsPanel({ tips, mutationStatus }) {
       <article className="panel p-4">
         <div className="mb-3">
           <h3 className="text-sm font-bold text-slate-900">Tips</h3>
-          <p className="text-xs text-slate-500">Manage educational or media snippets for customers.</p>
+          <p className="text-xs text-slate-500">Manage website tip containers.</p>
         </div>
         <div className="h-[470px] w-full">
           <DataGrid
@@ -215,4 +312,3 @@ function TipsPanel({ tips, mutationStatus }) {
 }
 
 export default TipsPanel;
-
