@@ -69,6 +69,27 @@ export const updateOrderStatus = createAsyncThunk(
   }
 );
 
+export const updateOrderPaymentStatus = createAsyncThunk(
+  "admin/updateOrderPaymentStatus",
+  async ({ orderId, paymentStatus }, { getState, rejectWithValue }) => {
+    try {
+      const token = getState().auth.token;
+      const response = await apiRequest(`/admin/orders/${orderId}/payment-status`, {
+        method: "PATCH",
+        token,
+        body: { paymentStatus }
+      });
+
+      return {
+        order: response.data,
+        message: response.message || "Payment status updated"
+      };
+    } catch (error) {
+      return rejectWithValue(getErrorMessage(error));
+    }
+  }
+);
+
 export const fetchOrderDetails = createAsyncThunk(
   "admin/fetchOrderDetails",
   async (orderId, { dispatch, rejectWithValue }) => {
@@ -372,6 +393,7 @@ export const updateSiteContent = createAsyncThunk(
 
 export const mutationThunks = [
   updateOrderStatus,
+  updateOrderPaymentStatus,
   createProduct,
   updateProduct,
   deleteProduct,

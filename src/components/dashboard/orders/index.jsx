@@ -1,10 +1,13 @@
 import { useMemo, useState } from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import { useAppDispatch } from "../../../app/hooks";
-import { updateOrderStatus } from "../../../features/admin/adminSlice";
+import {
+  updateOrderPaymentStatus,
+  updateOrderStatus
+} from "../../../features/admin/adminSlice";
 import { formatCurrency, formatDateTime } from "../../../utils/formatters";
 import { getOrdersColumns } from "./columns";
-import { mapOrderRows, ORDER_STATUSES } from "./helpers";
+import { mapOrderRows, ORDER_STATUSES, PAYMENT_STATUSES } from "./helpers";
 
 function OrdersPanel({
   orders,
@@ -16,27 +19,52 @@ function OrdersPanel({
 }) {
   const dispatch = useAppDispatch();
   const [draftStatus, setDraftStatus] = useState({});
+  const [draftPaymentStatus, setDraftPaymentStatus] = useState({});
 
   const rows = useMemo(() => mapOrderRows(orders), [orders]);
   const columns = useMemo(
     () =>
       getOrdersColumns({
         statuses: ORDER_STATUSES,
+        paymentStatuses: PAYMENT_STATUSES,
         mutationStatus,
         resolveStatus,
+        resolvePaymentStatus,
         onStatusChange: handleStatusChange,
         onStatusSave: handleStatusSave,
+        onPaymentStatusChange: handlePaymentStatusChange,
+        onPaymentStatusSave: handlePaymentStatusSave,
         onRequestOrderDetails
       }),
-    [mutationStatus, resolveStatus, handleStatusChange, handleStatusSave, onRequestOrderDetails]
+    [
+      mutationStatus,
+      resolveStatus,
+      resolvePaymentStatus,
+      handleStatusChange,
+      handleStatusSave,
+      handlePaymentStatusChange,
+      handlePaymentStatusSave,
+      onRequestOrderDetails
+    ]
   );
 
   function resolveStatus(row) {
     return draftStatus[row.id] || row.orderStatus;
   }
 
+  function resolvePaymentStatus(row) {
+    return draftPaymentStatus[row.id] || row.paymentStatus;
+  }
+
   function handleStatusChange(id, value) {
     setDraftStatus((previous) => ({
+      ...previous,
+      [id]: value
+    }));
+  }
+
+  function handlePaymentStatusChange(id, value) {
+    setDraftPaymentStatus((previous) => ({
       ...previous,
       [id]: value
     }));
@@ -58,6 +86,31 @@ function OrdersPanel({
       ).unwrap();
 
       setDraftStatus((previous) => {
+        const nextDraft = { ...previous };
+        delete nextDraft[id];
+        return nextDraft;
+      });
+    } catch (_error) {
+      // Error state is surfaced through admin slice.
+    }
+  }
+
+  async function handlePaymentStatusSave(id, currentStatus) {
+    const nextStatus = draftPaymentStatus[id] || currentStatus;
+
+    if (nextStatus === currentStatus) {
+      return;
+    }
+
+    try {
+      await dispatch(
+        updateOrderPaymentStatus({
+          orderId: id,
+          paymentStatus: nextStatus
+        })
+      ).unwrap();
+
+      setDraftPaymentStatus((previous) => {
         const nextDraft = { ...previous };
         delete nextDraft[id];
         return nextDraft;
@@ -140,10 +193,13 @@ function OrdersPanel({
 
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Order Info</p>
-              <p className="mt-2 text-xs text-slate-700">Status: {selectedOrder.orderStatus}</p>
+              <p className="mt-2 text-xs text-slate-700">Order Ref: {selectedOrder.merchantOrderId || selectedOrder._id}</p>
+              <p className="text-xs text-slate-700">Status: {selectedOrder.orderStatus}</p>
               <p className="text-xs text-slate-700">Payment: {selectedOrder.paymentStatus}</p>
-              <p className="text-xs text-slate-700">Total: {formatCurrency(selectedOrder.totalPrice)}</p>
+              <p className="text-xs text-slate-700">Method: {selectedOrder.paymentMethod}</p>
+              <p className="text-xs text-slate-700">Total: {formatCurrency(selectedOrder.finalPrice || selectedOrder.totalPrice)}</p>
               <p className="text-xs text-slate-700">Created: {formatDateTime(selectedOrder.createdAt)}</p>
+              <p className="text-xs text-slate-700">Reference: {selectedOrder.paymentReference || "N/A"}</p>
             </div>
 
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 md:col-span-2">
