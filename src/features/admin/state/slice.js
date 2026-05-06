@@ -5,6 +5,7 @@ import { logoutAdmin } from "../../auth/authSlice";
 import {
   fetchAdminSnapshot,
   updateOrderStatus,
+  updateOrderPaymentStatus,
   fetchOrderDetails,
   createProduct,
   updateProduct,
@@ -82,6 +83,21 @@ const adminSlice = createSlice({
         state.error = action.payload || "Unable to fetch admin snapshot";
       })
       .addCase(updateOrderStatus.fulfilled, (state, action) => {
+        state.orders = replaceById(state.orders, action.payload.order);
+        const selectedOrderId = String(state.selectedOrderDetails?._id || state.selectedOrderDetails?.id || "");
+
+        if (selectedOrderId && selectedOrderId === String(action.payload.order._id || action.payload.order.id)) {
+          state.selectedOrderDetails = {
+            ...state.selectedOrderDetails,
+            ...action.payload.order
+          };
+          state.orderDetailsById[selectedOrderId] = state.selectedOrderDetails;
+          state.orderDetailsFetchedAtById[selectedOrderId] = Date.now();
+        }
+
+        state.lastMessage = action.payload.message;
+      })
+      .addCase(updateOrderPaymentStatus.fulfilled, (state, action) => {
         state.orders = replaceById(state.orders, action.payload.order);
         const selectedOrderId = String(state.selectedOrderDetails?._id || state.selectedOrderDetails?.id || "");
 

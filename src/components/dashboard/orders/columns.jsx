@@ -2,13 +2,23 @@ import { formatCurrency, formatDateTime } from "../../../utils/formatters";
 
 export function getOrdersColumns({
   statuses,
+  paymentStatuses,
   mutationStatus,
   resolveStatus,
+  resolvePaymentStatus,
   onStatusChange,
   onStatusSave,
+  onPaymentStatusChange,
+  onPaymentStatusSave,
   onRequestOrderDetails
 }) {
   return [
+    {
+      field: "merchantOrderId",
+      headerName: "Order Ref",
+      minWidth: 150,
+      flex: 0.9
+    },
     {
       field: "customerName",
       headerName: "Customer",
@@ -37,8 +47,49 @@ export function getOrdersColumns({
     {
       field: "paymentStatus",
       headerName: "Payment",
-      minWidth: 110,
-      flex: 0.7
+      minWidth: 250,
+      flex: 1.4,
+      sortable: false,
+      renderCell: (params) => {
+        const isCashOnDelivery = params.row.paymentMethod === "cash_on_delivery";
+
+        if (!isCashOnDelivery) {
+          return (
+            <div className="flex w-full items-center justify-between gap-2">
+              <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-700">
+                {params.row.paymentStatus}
+              </span>
+              <span className="text-[11px] uppercase tracking-[0.08em] text-slate-400">
+                Card
+              </span>
+            </div>
+          );
+        }
+
+        return (
+          <div className="flex w-full items-center gap-2 py-1">
+            <select
+              className="w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-semibold"
+              value={resolvePaymentStatus(params.row)}
+              onChange={(event) => onPaymentStatusChange(params.row.id, event.target.value)}
+            >
+              {paymentStatuses.map((status) => (
+                <option key={status} value={status}>
+                  {status}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={() => onPaymentStatusSave(params.row.id, params.row.paymentStatus)}
+              disabled={mutationStatus === "loading"}
+              className="table-action-btn table-action-btn--neutral disabled:opacity-60"
+            >
+              Save
+            </button>
+          </div>
+        );
+      }
     },
     {
       field: "createdAt",
