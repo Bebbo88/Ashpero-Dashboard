@@ -3,7 +3,7 @@ import { DataGrid } from "@mui/x-data-grid";
 import { useAppDispatch } from "../../../app/hooks";
 import {
   updateOrderPaymentStatus,
-  updateOrderStatus
+  updateOrderStatus,
 } from "../../../features/admin/adminSlice";
 import { formatCurrency, formatDateTime } from "../../../utils/formatters";
 import { getOrdersColumns } from "./columns";
@@ -15,7 +15,7 @@ function OrdersPanel({
   selectedOrder,
   orderDetailsStatus,
   onRequestOrderDetails,
-  onCloseOrderDetails
+  onCloseOrderDetails,
 }) {
   const dispatch = useAppDispatch();
   const [draftStatus, setDraftStatus] = useState({});
@@ -34,7 +34,7 @@ function OrdersPanel({
         onStatusSave: handleStatusSave,
         onPaymentStatusChange: handlePaymentStatusChange,
         onPaymentStatusSave: handlePaymentStatusSave,
-        onRequestOrderDetails
+        onRequestOrderDetails,
       }),
     [
       mutationStatus,
@@ -44,8 +44,8 @@ function OrdersPanel({
       handleStatusSave,
       handlePaymentStatusChange,
       handlePaymentStatusSave,
-      onRequestOrderDetails
-    ]
+      onRequestOrderDetails,
+    ],
   );
 
   function resolveStatus(row) {
@@ -59,14 +59,14 @@ function OrdersPanel({
   function handleStatusChange(id, value) {
     setDraftStatus((previous) => ({
       ...previous,
-      [id]: value
+      [id]: value,
     }));
   }
 
   function handlePaymentStatusChange(id, value) {
     setDraftPaymentStatus((previous) => ({
       ...previous,
-      [id]: value
+      [id]: value,
     }));
   }
 
@@ -81,8 +81,8 @@ function OrdersPanel({
       await dispatch(
         updateOrderStatus({
           orderId: id,
-          orderStatus: nextStatus
-        })
+          orderStatus: nextStatus,
+        }),
       ).unwrap();
 
       setDraftStatus((previous) => {
@@ -106,8 +106,8 @@ function OrdersPanel({
       await dispatch(
         updateOrderPaymentStatus({
           orderId: id,
-          paymentStatus: nextStatus
-        })
+          paymentStatus: nextStatus,
+        }),
       ).unwrap();
 
       setDraftPaymentStatus((previous) => {
@@ -125,7 +125,9 @@ function OrdersPanel({
       <article className="panel p-4">
         <div className="mb-3">
           <h3 className="text-sm font-bold text-slate-900">Order Operations</h3>
-          <p className="text-xs text-slate-500">Update fulfillment state and inspect full order details.</p>
+          <p className="text-xs text-slate-500">
+            Update fulfillment state and inspect full order details.
+          </p>
         </div>
 
         <div className="h-[560px] w-full">
@@ -137,20 +139,20 @@ function OrdersPanel({
               pagination: {
                 paginationModel: {
                   pageSize: 10,
-                  page: 0
-                }
-              }
+                  page: 0,
+                },
+              },
             }}
             disableRowSelectionOnClick
             sx={{
               border: 0,
               "& .MuiDataGrid-columnHeaders": {
                 backgroundColor: "#f8fafc",
-                borderBottomColor: "#e2e8f0"
+                borderBottomColor: "#e2e8f0",
               },
               "& .MuiDataGrid-cell": {
-                borderBottomColor: "#eef2ff"
-              }
+                borderBottomColor: "#eef2ff",
+              },
             }}
           />
         </div>
@@ -159,8 +161,12 @@ function OrdersPanel({
       <article className="panel p-4">
         <div className="mb-3 flex items-center justify-between gap-3">
           <div>
-            <h3 className="text-sm font-bold text-slate-900">Selected Order Details</h3>
-            <p className="text-xs text-slate-500">Powered by `/admin/orders/:id` endpoint.</p>
+            <h3 className="text-sm font-bold text-slate-900">
+              Selected Order Details
+            </h3>
+            <p className="text-xs text-slate-500">
+              Powered by `/admin/orders/:id` endpoint.
+            </p>
           </div>
           {selectedOrder ? (
             <button
@@ -178,40 +184,86 @@ function OrdersPanel({
         ) : null}
 
         {!selectedOrder && orderDetailsStatus !== "loading" ? (
-          <p className="text-sm text-slate-500">Click "View" on any row to inspect complete order details.</p>
+          <p className="text-sm text-slate-500">
+            Click "View" on any row to inspect complete order details.
+          </p>
         ) : null}
 
         {selectedOrder ? (
           <div className="grid gap-3 md:grid-cols-2">
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Customer</p>
-              <p className="mt-2 text-sm font-semibold text-slate-900">{selectedOrder.customerName}</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                Customer
+              </p>
+              <p className="mt-2 text-sm font-semibold text-slate-900">
+                {selectedOrder.customerName}
+              </p>
               <p className="text-xs text-slate-600">{selectedOrder.phone}</p>
-              <p className="mt-1 text-xs text-slate-600">{selectedOrder.address}</p>
-              <p className="mt-1 text-xs text-slate-600">{selectedOrder.email || "No email"}</p>
+              <p className="mt-1 text-xs text-slate-600">
+                {selectedOrder.address}
+              </p>
+              <p className="mt-1 text-xs text-slate-600">
+                {selectedOrder.email || "No email"}
+              </p>
             </div>
 
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Order Info</p>
-              <p className="mt-2 text-xs text-slate-700">Order Ref: {selectedOrder.merchantOrderId || selectedOrder._id}</p>
-              <p className="text-xs text-slate-700">Status: {selectedOrder.orderStatus}</p>
-              <p className="text-xs text-slate-700">Payment: {selectedOrder.paymentStatus}</p>
-              <p className="text-xs text-slate-700">Method: {selectedOrder.paymentMethod}</p>
-              <p className="text-xs text-slate-700">Total: {formatCurrency(selectedOrder.finalPrice || selectedOrder.totalPrice)}</p>
-              <p className="text-xs text-slate-700">Created: {formatDateTime(selectedOrder.createdAt)}</p>
-              <p className="text-xs text-slate-700">Reference: {selectedOrder.paymentReference || "N/A"}</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                Order Info
+              </p>
+              <p className="mt-2 text-xs text-slate-700">
+                Order Ref: {selectedOrder.merchantOrderId || selectedOrder._id}
+              </p>
+              <p className="text-xs text-slate-700">
+                Status: {selectedOrder.orderStatus}
+              </p>
+              <p className="text-xs text-slate-700">
+                Payment: {selectedOrder.paymentStatus}
+              </p>
+              <p className="text-xs text-slate-700">
+                Method: {selectedOrder.paymentMethod}
+              </p>
+              <p className="text-xs text-slate-700">
+                Total:{" "}
+                {formatCurrency(
+                  selectedOrder.finalPrice || selectedOrder.totalPrice,
+                )}
+              </p>
+              <p className="text-xs text-slate-700">
+                Created: {formatDateTime(selectedOrder.createdAt)}
+              </p>
+              <p className="text-xs text-slate-700">
+                Reference: {selectedOrder.paymentReference || "N/A"}
+              </p>
             </div>
 
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 md:col-span-2">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Items</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                Items
+              </p>
               <ul className="mt-2 space-y-2 text-xs text-slate-700">
                 {(selectedOrder.items || []).map((item) => (
-                  <li key={item._id || item.productId?._id || item.productId} className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                  <li
+                    key={item._id || item.productId?._id || item.productId}
+                    className="rounded-lg border border-slate-200 bg-white px-3 py-2"
+                  >
                     <p className="font-semibold text-slate-800">
-                      {item.productName || item.productId?.name_en || item.productId?.name || "Product"}
+                      {item.productName ||
+                        item.productId?.name_en ||
+                        item.productId?.name ||
+                        "Product"}
                     </p>
+
+                    {item.selectedSize ? (
+                      <p className="text-xs text-slate-500">
+                        Size: {item.selectedSize}
+                      </p>
+                    ) : null}
+
                     <p>
-                      Qty: {item.quantity} | Unit: {formatCurrency(item.unitPrice || item.priceAtPurchase)} | Final: {formatCurrency(item.priceAtPurchase)}
+                      Qty: {item.quantity} | Unit:{" "}
+                      {formatCurrency(item.unitPrice || item.priceAtPurchase)} |
+                      Final: {formatCurrency(item.priceAtPurchase)}
                     </p>
                   </li>
                 ))}
