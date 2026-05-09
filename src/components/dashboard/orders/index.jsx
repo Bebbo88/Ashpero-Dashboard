@@ -18,10 +18,12 @@ function OrdersPanel({
   onCloseOrderDetails,
 }) {
   const dispatch = useAppDispatch();
+
   const [draftStatus, setDraftStatus] = useState({});
   const [draftPaymentStatus, setDraftPaymentStatus] = useState({});
 
   const rows = useMemo(() => mapOrderRows(orders), [orders]);
+
   const columns = useMemo(
     () =>
       getOrdersColumns({
@@ -36,16 +38,7 @@ function OrdersPanel({
         onPaymentStatusSave: handlePaymentStatusSave,
         onRequestOrderDetails,
       }),
-    [
-      mutationStatus,
-      resolveStatus,
-      resolvePaymentStatus,
-      handleStatusChange,
-      handleStatusSave,
-      handlePaymentStatusChange,
-      handlePaymentStatusSave,
-      onRequestOrderDetails,
-    ],
+    [mutationStatus, onRequestOrderDetails, draftStatus, draftPaymentStatus],
   );
 
   function resolveStatus(row) {
@@ -91,11 +84,15 @@ function OrdersPanel({
         return nextDraft;
       });
     } catch (_error) {
-      // Error state is surfaced through admin slice.
+      // handled in slice
     }
   }
 
-  async function handlePaymentStatusSave(id, currentStatus) {
+  async function handlePaymentStatusSave(id, currentStatus, paymentMethod) {
+    if (paymentMethod !== "cash_on_delivery") {
+      return;
+    }
+
     const nextStatus = draftPaymentStatus[id] || currentStatus;
 
     if (nextStatus === currentStatus) {
@@ -116,7 +113,27 @@ function OrdersPanel({
         return nextDraft;
       });
     } catch (_error) {
-      // Error state is surfaced through admin slice.
+      // handled in slice
+    }
+  }
+
+  function getStatusBadgeClass(status) {
+    switch (status) {
+      case "delivered":
+      case "paid":
+        return "bg-emerald-100 text-emerald-700";
+
+      case "pending":
+      case "processing":
+      case "shipped":
+        return "bg-amber-100 text-amber-700";
+
+      case "cancelled":
+      case "failed":
+        return "bg-red-100 text-red-700";
+
+      default:
+        return "bg-slate-100 text-slate-700";
     }
   }
 
@@ -125,6 +142,7 @@ function OrdersPanel({
       <article className="panel p-4">
         <div className="mb-3">
           <h3 className="text-sm font-bold text-slate-900">Order Operations</h3>
+
           <p className="text-xs text-slate-500">
             Update fulfillment state and inspect full order details.
           </p>
@@ -146,10 +164,12 @@ function OrdersPanel({
             disableRowSelectionOnClick
             sx={{
               border: 0,
+
               "& .MuiDataGrid-columnHeaders": {
                 backgroundColor: "#f8fafc",
                 borderBottomColor: "#e2e8f0",
               },
+
               "& .MuiDataGrid-cell": {
                 borderBottomColor: "#eef2ff",
               },
@@ -164,10 +184,12 @@ function OrdersPanel({
             <h3 className="text-sm font-bold text-slate-900">
               Selected Order Details
             </h3>
+
             <p className="text-xs text-slate-500">
               Powered by `/admin/orders/:id` endpoint.
             </p>
           </div>
+
           {selectedOrder ? (
             <button
               type="button"
@@ -195,14 +217,24 @@ function OrdersPanel({
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
                 Customer
               </p>
+
               <p className="mt-2 text-sm font-semibold text-slate-900">
                 {selectedOrder.customerName}
               </p>
+
               <p className="text-xs text-slate-600">{selectedOrder.phone}</p>
-              <p className="mt-1 text-xs text-slate-600">
+
+              {selectedOrder.secondaryPhone ? (
+                <p className="text-xs text-slate-600">
+                  Secondary: {selectedOrder.secondaryPhone}
+                </p>
+              ) : null}
+
+              <p className="mt-1 break-words text-xs text-slate-600">
                 {selectedOrder.address}
               </p>
-              <p className="mt-1 text-xs text-slate-600">
+
+              <p className="mt-1 break-all text-xs text-slate-600">
                 {selectedOrder.email || "No email"}
               </p>
             </div>
@@ -211,29 +243,61 @@ function OrdersPanel({
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
                 Order Info
               </p>
-              <p className="mt-2 text-xs text-slate-700">
+
+              <p className="mt-2 break-all text-xs text-slate-700">
                 Order Ref: {selectedOrder.merchantOrderId || selectedOrder._id}
               </p>
-              <p className="text-xs text-slate-700">
-                Status: {selectedOrder.orderStatus}
-              </p>
-              <p className="text-xs text-slate-700">
-                Payment: {selectedOrder.paymentStatus}
-              </p>
-              <p className="text-xs text-slate-700">
+
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <span className="text-[11px] font-semibold text-slate-500">
+                  Order:
+                </span>
+
+                <span
+                  className={`rounded-full px-2 py-1 text-[11px] font-semibold ${getStatusBadgeClass(
+                    selectedOrder.orderStatus,
+                  )}`}
+                >
+                  {selectedOrder.orderStatus}
+                </span>
+
+                <span className="text-[11px] font-semibold text-slate-500">
+                  Payment:
+                </span>
+
+                <span
+                  className={`rounded-full px-2 py-1 text-[11px] font-semibold ${getStatusBadgeClass(
+                    selectedOrder.paymentStatus,
+                  )}`}
+                >
+                  {selectedOrder.paymentStatus}
+                </span>
+              </div>
+
+              <p className="mt-3 text-xs text-slate-700">
                 Method: {selectedOrder.paymentMethod}
               </p>
+
+              <p className="text-xs text-slate-700">
+                Items: {selectedOrder.items?.length || 0}
+              </p>
+
               <p className="text-xs text-slate-700">
                 Total:{" "}
                 {formatCurrency(
                   selectedOrder.finalPrice || selectedOrder.totalPrice,
                 )}
               </p>
+
               <p className="text-xs text-slate-700">
                 Created: {formatDateTime(selectedOrder.createdAt)}
               </p>
-              <p className="text-xs text-slate-700">
-                Reference: {selectedOrder.paymentReference || "N/A"}
+
+              <p className="break-all text-xs text-slate-700">
+                Reference:{" "}
+                {selectedOrder.paymentReference
+                  ? `${selectedOrder.paymentReference.slice(0, 30)}...`
+                  : "N/A"}
               </p>
             </div>
 
@@ -241,11 +305,12 @@ function OrdersPanel({
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
                 Items
               </p>
-              <ul className="mt-2 space-y-2 text-xs text-slate-700">
+
+              <div className="mt-3 flex flex-wrap gap-3">
                 {(selectedOrder.items || []).map((item) => (
-                  <li
+                  <div
                     key={item._id || item.productId?._id || item.productId}
-                    className="rounded-lg border border-slate-200 bg-white px-3 py-2"
+                    className="min-w-[260px] flex-1 rounded-xl border border-slate-200 bg-white p-3"
                   >
                     <p className="font-semibold text-slate-800">
                       {item.productName ||
@@ -255,19 +320,38 @@ function OrdersPanel({
                     </p>
 
                     {item.selectedSize ? (
-                      <p className="text-xs text-slate-500">
+                      <span className="mt-2 inline-flex rounded-full bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-700">
                         Size: {item.selectedSize}
-                      </p>
+                      </span>
                     ) : null}
 
-                    <p>
-                      Qty: {item.quantity} | Unit:{" "}
-                      {formatCurrency(item.unitPrice || item.priceAtPurchase)} |
-                      Final: {formatCurrency(item.priceAtPurchase)}
-                    </p>
-                  </li>
+                    <div className="mt-3 space-y-1 text-xs text-slate-600">
+                      <p>
+                        Quantity:{" "}
+                        <span className="font-semibold">{item.quantity}</span>
+                      </p>
+
+                      <p>
+                        Unit Price:{" "}
+                        <span className="font-semibold">
+                          {formatCurrency(
+                            item.unitPrice || item.priceAtPurchase,
+                          )}
+                        </span>
+                      </p>
+
+                      <p>
+                        Final Total:{" "}
+                        <span className="font-semibold text-slate-800">
+                          {formatCurrency(
+                            (item.priceAtPurchase || 0) * (item.quantity || 0),
+                          )}
+                        </span>
+                      </p>
+                    </div>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </div>
           </div>
         ) : null}

@@ -1,6 +1,24 @@
-﻿export const DEFAULT_CATEGORIES = ["Anti-Aging", "Hydration", "Glow", "Cleansing"];
-export const DEFAULT_PRODUCT_TYPES = ["serums", "moisturizers", "cleansers", "masks", "oils", "spf"];
-export const DEFAULT_SKIN_TYPES = ["oily", "dry", "combination", "normal", "sensitive"];
+﻿export const DEFAULT_CATEGORIES = [
+  "Anti-Aging",
+  "Hydration",
+  "Glow",
+  "Cleansing",
+];
+export const DEFAULT_PRODUCT_TYPES = [
+  "serums",
+  "moisturizers",
+  "cleansers",
+  "masks",
+  "oils",
+  "spf",
+];
+export const DEFAULT_SKIN_TYPES = [
+  "oily",
+  "dry",
+  "combination",
+  "normal",
+  "sensitive",
+];
 
 export const INITIAL_FORM = {
   name_en: "",
@@ -14,10 +32,13 @@ export const INITIAL_FORM = {
   category: "",
   productType: [],
   skinType: [],
-  price: "",
-  stock: "",
-  sizes: [],
-  sizePrices: [],
+  variants: [
+    {
+      size: "",
+      price: "",
+      stock: "",
+    },
+  ],
   isActive: true,
-  isBestSeller: false
+  isBestSeller: false,
 };

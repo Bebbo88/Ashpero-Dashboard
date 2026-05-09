@@ -21,7 +21,10 @@ function ProductFormCard({
   onToggleSkinType,
   onImageFilesChange,
   onSubmit,
-  onReset
+  onReset,
+  onAddVariant,
+  onRemoveVariant,
+  onChangeVariant,
 }) {
   return (
     <article className="panel p-4">
@@ -30,7 +33,8 @@ function ProductFormCard({
           {editingProductId ? "Edit Product" : "Create Product"}
         </h3>
         <p className="text-xs text-slate-500">
-          English + Arabic fields are required (name, description, ingredients, how to use). Category is required. Sizes are optional.
+          English + Arabic fields are required (name, description, ingredients,
+          how to use). Category is required. Sizes are optional.
         </p>
       </div>
 
@@ -187,96 +191,72 @@ function ProductFormCard({
             })}
           </div>
         </div>
-
-        <input
-          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-          name="price"
-          placeholder="Price"
-          type="number"
-          min="0"
-          step="0.01"
-          value={form.price}
-          onChange={onFieldChange}
-          required
-        />
-        <input
-          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-          name="stock"
-          placeholder="Stock"
-          type="number"
-          min="0"
-          step="1"
-          value={form.stock}
-          onChange={onFieldChange}
-          required
-        />
-
         <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 md:col-span-2">
-          <div className="mb-2 text-xs font-semibold text-slate-700">Sizes (Optional)</div>
-          <div className="flex flex-wrap gap-2">
-            <input
-              className="min-w-[170px] flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-              placeholder="Example: 50ml"
-              value={sizeDraft}
-              onChange={onSizeDraftChange}
-              onKeyDown={onSizeDraftKeyDown}
-            />
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-sm font-semibold text-slate-700">
+              Product Variants
+            </p>
+
             <button
               type="button"
-              onClick={onAddSize}
-              className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700"
+              onClick={onAddVariant}
+              className="rounded-lg border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-700"
             >
-              Add Size
+              Add Variant
             </button>
           </div>
-          {form.sizes.length > 0 ? (
-            <div className="mt-2 space-y-2">
-              <div className="flex flex-wrap gap-2">
-                {form.sizes.map((size) => (
-                  <button
-                    key={size}
-                    type="button"
-                    onClick={() => onRemoveSize(size)}
-                    className="rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-700"
-                    title="Remove size"
-                  >
-                    {size} x
-                  </button>
-                ))}
-              </div>
-              <div className="grid gap-2 md:grid-cols-2">
-                {form.sizes.map((size) => {
-                  const row = form.sizePrices.find((entry) => entry.size === size) || {
-                    size,
-                    price: ""
-                  };
 
-                  return (
-                    <label
-                      key={`${size}-price`}
-                      className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700"
-                    >
-                      {`Price for ${size}`}
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={row.price}
-                        onChange={(event) => onSizePriceChange(size, event.target.value)}
-                        className="mt-1 w-full rounded-md border border-slate-200 px-2 py-1 text-sm font-normal"
-                        placeholder="0.00"
-                        required
-                      />
-                    </label>
-                  );
-                })}
+          <div className="space-y-3">
+            {form.variants.map((variant, index) => (
+              <div key={index} className="grid gap-2 md:grid-cols-4">
+                <input
+                  type="text"
+                  placeholder="Size"
+                  value={variant.size}
+                  onChange={(event) =>
+                    onChangeVariant(index, "size", event.target.value)
+                  }
+                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                  required
+                />
+
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="Price"
+                  value={variant.price}
+                  onChange={(event) =>
+                    onChangeVariant(index, "price", event.target.value)
+                  }
+                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                  required
+                />
+
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  placeholder="Stock"
+                  value={variant.stock}
+                  onChange={(event) =>
+                    onChangeVariant(index, "stock", event.target.value)
+                  }
+                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                  required
+                />
+
+                <button
+                  type="button"
+                  onClick={() => onRemoveVariant(index)}
+                  className="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm font-semibold text-red-600"
+                >
+                  Remove
+                </button>
               </div>
-            </div>
-          ) : (
-            <p className="mt-2 text-[11px] text-slate-500">No sizes added yet.</p>
-          )}
+            ))}
+          </div>
         </div>
-
         <label className="text-xs font-semibold text-slate-600 md:col-span-2">
           Product Images (up to 5 files)
           <input
@@ -291,12 +271,19 @@ function ProductFormCard({
         {editingProductId ? (
           <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 md:col-span-2">
             <p>Current product images: {editingPreview.images.length}</p>
-            <p className="mt-1 text-[11px]">Uploading new files appends to current product images.</p>
+            <p className="mt-1 text-[11px]">
+              Uploading new files appends to current product images.
+            </p>
           </div>
         ) : null}
 
         <label className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700 md:col-span-2">
-          <input type="checkbox" name="isActive" checked={form.isActive} onChange={onFieldChange} />
+          <input
+            type="checkbox"
+            name="isActive"
+            checked={form.isActive}
+            onChange={onFieldChange}
+          />
           Product is active
         </label>
         <label className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700 md:col-span-2">

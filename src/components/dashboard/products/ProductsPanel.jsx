@@ -4,32 +4,16 @@ import {
   createProduct,
   deleteProduct,
   updateProduct,
-  updateProductStock
 } from "../../../features/admin/adminSlice";
 import {
   DEFAULT_CATEGORIES,
   DEFAULT_PRODUCT_TYPES,
   DEFAULT_SKIN_TYPES,
-  INITIAL_FORM
+  INITIAL_FORM,
 } from "./constants";
 import { normalizeList } from "./helpers";
 import ProductFormCard from "./ProductFormCard";
 import ProductsTableCard from "./ProductsTableCard";
-
-function syncSizePricesWithSizes(sizePrices = [], sizes = []) {
-  const nextSizes = normalizeList(sizes);
-
-  return nextSizes.map((size) => {
-    const existing = (sizePrices || []).find(
-      (entry) => String(entry.size || "").trim().toLowerCase() === size.toLowerCase()
-    );
-
-    return {
-      size,
-      price: existing?.price ?? ""
-    };
-  });
-}
 
 function ProductsPanel({ products, mutationStatus }) {
   const dispatch = useAppDispatch();
@@ -37,11 +21,9 @@ function ProductsPanel({ products, mutationStatus }) {
   const [productImageFiles, setProductImageFiles] = useState([]);
   const [editingProductId, setEditingProductId] = useState("");
   const [editingPreview, setEditingPreview] = useState({
-    images: []
+    images: [],
   });
-  const [stockDraft, setStockDraft] = useState({});
   const [customCategory, setCustomCategory] = useState("");
-  const [sizeDraft, setSizeDraft] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [productTypeFilter, setProductTypeFilter] = useState("all");
   const [skinTypeFilter, setSkinTypeFilter] = useState("all");
@@ -51,22 +33,22 @@ function ProductsPanel({ products, mutationStatus }) {
       [...products]
         .sort(
           (left, right) =>
-            new Date(right.updatedAt || right.createdAt) - new Date(left.updatedAt || left.createdAt)
+            new Date(right.updatedAt || right.createdAt) -
+            new Date(left.updatedAt || left.createdAt),
         )
         .map((product) => ({
           id: product._id,
           ...product,
-          sizes: Array.isArray(product.sizes) ? normalizeList(product.sizes) : [],
-          productType: Array.isArray(product.productType) ? normalizeList(product.productType) : [],
-          skinType: Array.isArray(product.skinType) ? normalizeList(product.skinType) : [],
-          sizePrices: Array.isArray(product.sizePrices)
-            ? product.sizePrices.map((entry) => ({
-                size: String(entry?.size || "").trim(),
-                price: entry?.price ?? ""
-              }))
-            : []
+
+          productType: Array.isArray(product.productType)
+            ? normalizeList(product.productType)
+            : [],
+          skinType: Array.isArray(product.skinType)
+            ? normalizeList(product.skinType)
+            : [],
+          variants: Array.isArray(product.variants) ? product.variants : [],
         })),
-    [products]
+    [products],
   );
 
   const categoryOptions = useMemo(() => {
@@ -75,49 +57,68 @@ function ProductsPanel({ products, mutationStatus }) {
   }, [products]);
   const productTypeOptions = useMemo(() => {
     const existingValues = products.flatMap((product) =>
-      Array.isArray(product.productType) ? product.productType : []
+      Array.isArray(product.productType) ? product.productType : [],
     );
     return normalizeList([...DEFAULT_PRODUCT_TYPES, ...existingValues]);
   }, [products]);
   const skinTypeOptions = useMemo(() => {
     const existingValues = products.flatMap((product) =>
-      Array.isArray(product.skinType) ? product.skinType : []
+      Array.isArray(product.skinType) ? product.skinType : [],
     );
     return normalizeList([...DEFAULT_SKIN_TYPES, ...existingValues]);
   }, [products]);
 
   const tableCategories = useMemo(
     () => normalizeList(rows.map((row) => row.category)),
-    [rows]
+    [rows],
   );
   const tableProductTypes = useMemo(
-    () => normalizeList(rows.flatMap((row) => (Array.isArray(row.productType) ? row.productType : []))),
-    [rows]
+    () =>
+      normalizeList(
+        rows.flatMap((row) =>
+          Array.isArray(row.productType) ? row.productType : [],
+        ),
+      ),
+    [rows],
   );
   const tableSkinTypes = useMemo(
-    () => normalizeList(rows.flatMap((row) => (Array.isArray(row.skinType) ? row.skinType : []))),
-    [rows]
+    () =>
+      normalizeList(
+        rows.flatMap((row) =>
+          Array.isArray(row.skinType) ? row.skinType : [],
+        ),
+      ),
+    [rows],
   );
 
   const filteredRows = useMemo(() => {
     return rows.filter((row) => {
       if (
         categoryFilter !== "all" &&
-        String(row.category || "").trim().toLowerCase() !== categoryFilter.toLowerCase()
+        String(row.category || "")
+          .trim()
+          .toLowerCase() !== categoryFilter.toLowerCase()
       ) {
         return false;
       }
 
       if (
         productTypeFilter !== "all" &&
-        !row.productType.some((entry) => String(entry || "").toLowerCase() === productTypeFilter.toLowerCase())
+        !row.productType.some(
+          (entry) =>
+            String(entry || "").toLowerCase() ===
+            productTypeFilter.toLowerCase(),
+        )
       ) {
         return false;
       }
 
       if (
         skinTypeFilter !== "all" &&
-        !row.skinType.some((entry) => String(entry || "").toLowerCase() === skinTypeFilter.toLowerCase())
+        !row.skinType.some(
+          (entry) =>
+            String(entry || "").toLowerCase() === skinTypeFilter.toLowerCase(),
+        )
       ) {
         return false;
       }
@@ -132,7 +133,6 @@ function ProductsPanel({ products, mutationStatus }) {
     setEditingProductId("");
     setEditingPreview({ images: [] });
     setCustomCategory("");
-    setSizeDraft("");
   }
 
   function onFieldChange(event) {
@@ -140,7 +140,7 @@ function ProductsPanel({ products, mutationStatus }) {
 
     setForm((previous) => ({
       ...previous,
-      [name]: type === "checkbox" ? checked : value
+      [name]: type === "checkbox" ? checked : value,
     }));
   }
 
@@ -149,7 +149,7 @@ function ProductsPanel({ products, mutationStatus }) {
 
     setForm((previous) => ({
       ...previous,
-      category: value
+      category: value,
     }));
 
     if (value !== "__custom__") {
@@ -164,63 +164,60 @@ function ProductsPanel({ products, mutationStatus }) {
 
     return String(form.category || "").trim();
   }
-
-  function addSize() {
-    const sizeValue = sizeDraft.trim();
-
-    if (!sizeValue) {
-      return;
-    }
-
-    setForm((previous) => {
-      const nextSizes = normalizeList([...previous.sizes, sizeValue]);
-      return {
-        ...previous,
-        sizes: nextSizes,
-        sizePrices: syncSizePricesWithSizes(previous.sizePrices, nextSizes)
-      };
-    });
-    setSizeDraft("");
-  }
-
-  function removeSize(sizeToRemove) {
-    setForm((previous) => {
-      const nextSizes = previous.sizes.filter((size) => size !== sizeToRemove);
-      return {
-        ...previous,
-        sizes: nextSizes,
-        sizePrices: syncSizePricesWithSizes(previous.sizePrices, nextSizes)
-      };
-    });
-  }
-
-  function changeSizePrice(size, value) {
-    const nextValue = value === "" ? "" : String(value);
-
+  function addVariant() {
     setForm((previous) => ({
       ...previous,
-      sizePrices: previous.sizePrices.map((entry) =>
-        entry.size === size
+      variants: [
+        ...previous.variants,
+        {
+          size: "",
+          price: "",
+          stock: "",
+        },
+      ],
+    }));
+  }
+
+  function removeVariant(index) {
+    setForm((previous) => ({
+      ...previous,
+      variants: previous.variants.filter(
+        (_, currentIndex) => currentIndex !== index,
+      ),
+    }));
+  }
+
+  function changeVariant(index, field, value) {
+    setForm((previous) => ({
+      ...previous,
+      variants: previous.variants.map((variant, currentIndex) =>
+        currentIndex === index
           ? {
-              ...entry,
-              price: nextValue
+              ...variant,
+              [field]: value,
             }
-          : entry
-      )
+          : variant,
+      ),
     }));
   }
 
   function toggleArrayField(fieldName, option) {
     setForm((previous) => {
-      const currentValues = Array.isArray(previous[fieldName]) ? previous[fieldName] : [];
-      const exists = currentValues.some((entry) => entry.toLowerCase() === option.toLowerCase());
+      const currentValues = Array.isArray(previous[fieldName])
+        ? previous[fieldName]
+        : [];
+      const exists = currentValues.some(
+        (entry) => entry.toLowerCase() === option.toLowerCase(),
+      );
       const nextValues = exists
-        ? currentValues.filter((entry) => entry.toLowerCase() !== option.toLowerCase())
+        ? currentValues.filter(
+            (entry) => entry.toLowerCase() !== option.toLowerCase(),
+          )
         : [...currentValues, option];
 
       return {
         ...previous,
-        [fieldName]: normalizeList(nextValues)
+        [fieldName]: normalizeList(nextValues),
       };
     });
   }
@@ -244,23 +241,25 @@ function ProductsPanel({ products, mutationStatus }) {
     for (const value of form.skinType) {
       formData.append("skinType", value);
     }
-    formData.append("price", String(form.price).trim());
-    formData.append("stock", String(form.stock).trim());
+
     formData.append("isActive", String(form.isActive));
     formData.append("isBestSeller", String(form.isBestSeller));
+    const variantsPayload = form.variants
+      .map((variant) => ({
+        size: String(variant.size || "").trim(),
 
-    for (const size of form.sizes) {
-      formData.append("sizes", size);
-    }
+        price: Number(variant.price),
 
-    const sizePricesPayload = form.sizePrices
-      .map((entry) => ({
-        size: String(entry.size || "").trim(),
-        price: Number(entry.price)
+        stock: Number(variant.stock),
       }))
-      .filter((entry) => entry.size && Number.isFinite(entry.price));
+      .filter(
+        (variant) =>
+          variant.size &&
+          Number.isFinite(variant.price) &&
+          Number.isFinite(variant.stock),
+      );
 
-    formData.append("sizePrices", JSON.stringify(sizePricesPayload));
+    formData.append("variants", JSON.stringify(variantsPayload));
 
     for (const file of productImageFiles) {
       formData.append("images", file);
@@ -278,18 +277,13 @@ function ProductsPanel({ products, mutationStatus }) {
       return;
     }
 
-    if (
-      form.sizes.length > 0 &&
-      form.sizePrices.some((entry) => entry.price === "" || Number(entry.price) < 0 || Number.isNaN(Number(entry.price)))
-    ) {
-      return;
-    }
-
     const formData = buildFormData();
 
     try {
       if (editingProductId) {
-        await dispatch(updateProduct({ productId: editingProductId, formData })).unwrap();
+        await dispatch(
+          updateProduct({ productId: editingProductId, formData }),
+        ).unwrap();
       } else {
         await dispatch(createProduct(formData)).unwrap();
       }
@@ -304,7 +298,7 @@ function ProductsPanel({ products, mutationStatus }) {
     setEditingProductId(row.id);
     setProductImageFiles([]);
     setEditingPreview({
-      images: Array.isArray(row.images) ? row.images : []
+      images: Array.isArray(row.images) ? row.images : [],
     });
 
     const rowCategory = String(row.category || "").trim();
@@ -319,21 +313,17 @@ function ProductsPanel({ products, mutationStatus }) {
       howToUse_en: row.howToUse_en || "",
       howToUse_ar: row.howToUse_ar || "",
       category: rowCategory,
-      productType: Array.isArray(row.productType) ? normalizeList(row.productType) : [],
+      productType: Array.isArray(row.productType)
+        ? normalizeList(row.productType)
+        : [],
       skinType: Array.isArray(row.skinType) ? normalizeList(row.skinType) : [],
-      price: row.price ?? "",
-      stock: row.stock ?? "",
-      sizes: Array.isArray(row.sizes) ? normalizeList(row.sizes) : [],
-      sizePrices: syncSizePricesWithSizes(
-        Array.isArray(row.sizePrices) ? row.sizePrices : [],
-        Array.isArray(row.sizes) ? normalizeList(row.sizes) : []
-      ),
+      variants: Array.isArray(row.variants) ? row.variants : [],
       isActive: typeof row.isActive === "boolean" ? row.isActive : true,
-      isBestSeller: typeof row.isBestSeller === "boolean" ? row.isBestSeller : false
+      isBestSeller:
+        typeof row.isBestSeller === "boolean" ? row.isBestSeller : false,
     });
 
     setCustomCategory("");
-    setSizeDraft("");
   }
 
   function removeProduct(id) {
@@ -341,34 +331,6 @@ function ProductsPanel({ products, mutationStatus }) {
 
     if (editingProductId === id) {
       resetForm();
-    }
-  }
-
-  function changeStockDraft(id, value) {
-    setStockDraft((previous) => ({
-      ...previous,
-      [id]: value
-    }));
-  }
-
-  async function saveStock(id, currentStock) {
-    const nextStockRaw = stockDraft[id];
-    const nextStock =
-      nextStockRaw === undefined || nextStockRaw === "" ? currentStock : Number(nextStockRaw);
-
-    if (Number.isNaN(nextStock) || nextStock === currentStock) {
-      return;
-    }
-
-    try {
-      await dispatch(updateProductStock({ productId: id, stock: nextStock })).unwrap();
-      setStockDraft((previous) => {
-        const nextDraft = { ...previous };
-        delete nextDraft[id];
-        return nextDraft;
-      });
-    } catch (_error) {
-      // Error state is surfaced through admin slice.
     }
   }
 
@@ -381,28 +343,26 @@ function ProductsPanel({ products, mutationStatus }) {
         productImageFiles={productImageFiles}
         editingPreview={editingPreview}
         customCategory={customCategory}
-        sizeDraft={sizeDraft}
         categoryOptions={categoryOptions}
         productTypeOptions={productTypeOptions}
         skinTypeOptions={skinTypeOptions}
         onFieldChange={onFieldChange}
         onCategoryChange={onCategoryChange}
-        onCustomCategoryChange={(event) => setCustomCategory(event.target.value)}
-        onSizeDraftChange={(event) => setSizeDraft(event.target.value)}
-        onSizeDraftKeyDown={(event) => {
-          if (event.key === "Enter") {
-            event.preventDefault();
-            addSize();
-          }
-        }}
-        onAddSize={addSize}
-        onRemoveSize={removeSize}
-        onSizePriceChange={changeSizePrice}
-        onToggleProductType={(option) => toggleArrayField("productType", option)}
+        onCustomCategoryChange={(event) =>
+          setCustomCategory(event.target.value)
+        }
+        onToggleProductType={(option) =>
+          toggleArrayField("productType", option)
+        }
         onToggleSkinType={(option) => toggleArrayField("skinType", option)}
-        onImageFilesChange={(event) => setProductImageFiles(Array.from(event.target.files || []))}
+        onImageFilesChange={(event) =>
+          setProductImageFiles(Array.from(event.target.files || []))
+        }
         onSubmit={handleSubmit}
         onReset={resetForm}
+        onAddVariant={addVariant}
+        onRemoveVariant={removeVariant}
+        onChangeVariant={changeVariant}
       />
 
       <ProductsTableCard
@@ -413,12 +373,15 @@ function ProductsPanel({ products, mutationStatus }) {
         categoryFilter={categoryFilter}
         productTypeFilter={productTypeFilter}
         skinTypeFilter={skinTypeFilter}
-        stockDraft={stockDraft}
-        onCategoryFilterChange={(event) => setCategoryFilter(event.target.value)}
-        onProductTypeFilterChange={(event) => setProductTypeFilter(event.target.value)}
-        onSkinTypeFilterChange={(event) => setSkinTypeFilter(event.target.value)}
-        onChangeStockDraft={changeStockDraft}
-        onSaveStock={saveStock}
+        onCategoryFilterChange={(event) =>
+          setCategoryFilter(event.target.value)
+        }
+        onProductTypeFilterChange={(event) =>
+          setProductTypeFilter(event.target.value)
+        }
+        onSkinTypeFilterChange={(event) =>
+          setSkinTypeFilter(event.target.value)
+        }
         onStartEdit={startEdit}
         onRemoveProduct={removeProduct}
       />
