@@ -7,44 +7,57 @@ export function buildOverviewViewModel({ dashboard, orders, inventory }) {
   const totalActiveOffers = Number(dashboard.totalActiveOffers || 0);
   const lowStockProducts = Number(dashboard.lowStockProducts || 0);
 
-  const deliveredOrders = orders.filter((order) => order.orderStatus === "delivered").length;
-  const cancelledOrders = orders.filter((order) => order.orderStatus === "cancelled").length;
-  const paidOrders = orders.filter((order) => order.paymentStatus === "paid").length;
-  const failedPayments = orders.filter((order) => order.paymentStatus === "failed").length;
+  const deliveredOrders = orders.filter(
+    (order) => order.orderStatus === "delivered",
+  ).length;
+  const cancelledOrders = orders.filter(
+    (order) => order.orderStatus === "cancelled",
+  ).length;
+  const paidOrders = orders.filter(
+    (order) => order.paymentStatus === "paid",
+  ).length;
+  const failedPayments = orders.filter(
+    (order) => order.paymentStatus === "failed",
+  ).length;
 
   const inventoryUnits = inventory.reduce(
-    (sum, item) => sum + (Number.isFinite(Number(item.currentStock)) ? Number(item.currentStock) : 0),
-    0
+    (sum, item) =>
+      sum +
+      (Number.isFinite(Number(item.currentStock))
+        ? Number(item.currentStock)
+        : 0),
+    0,
   );
 
   const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
-  const deliveredRate = totalOrders > 0 ? (deliveredOrders / totalOrders) * 100 : 0;
+  const deliveredRate =
+    totalOrders > 0 ? (deliveredOrders / totalOrders) * 100 : 0;
 
   const firstRowCards = [
     {
       key: "revenue",
       label: "Total Revenue",
       value: formatCurrency(totalRevenue),
-      note: "Gross revenue tracked from all orders"
+      note: "Gross revenue tracked from all orders",
     },
     {
       key: "products",
       label: "Total Products",
       value: String(totalProducts),
-      note: "Catalog breadth currently available"
+      note: "Catalog breadth currently available",
     },
     {
       key: "offers",
       label: "Active Offers",
       value: String(totalActiveOffers),
-      note: "Running campaigns in active date window"
+      note: "Running campaigns in active date window",
     },
     {
       key: "inventory",
       label: "Inventory Units",
       value: String(inventoryUnits),
-      note: `${lowStockProducts} products are below stock threshold`
-    }
+      note: `${lowStockProducts} products are below stock threshold`,
+    },
   ];
 
   const executiveCards = [
@@ -53,43 +66,26 @@ export function buildOverviewViewModel({ dashboard, orders, inventory }) {
       label: "Total Orders",
       value: String(totalOrders),
       trend: "Overall order volume in the system",
-      tone: "teal"
+      tone: "teal",
     },
-    {
-      key: "aov",
-      label: "Average Order Value",
-      value: formatCurrency(averageOrderValue),
-      trend: `${totalOrders} orders contributed to this average`,
-      tone: "teal"
-    },
+
     {
       key: "delivery",
       label: "Delivered Orders",
       value: String(deliveredOrders),
       trend: `${deliveredRate.toFixed(1)}% delivery completion rate`,
-      tone: "orange"
+      tone: "orange",
     },
     {
       key: "payments",
       label: "Paid Orders",
       value: String(paidOrders),
-      trend: failedPayments > 0 ? `${failedPayments} failed payments need follow-up` : "No failed payments",
-      tone: failedPayments > 0 ? "red" : "teal"
+      trend:
+        failedPayments > 0
+          ? `${failedPayments} failed payments `
+          : "No failed payments",
+      tone: failedPayments > 0 ? "red" : "teal",
     },
-    {
-      key: "risk",
-      label: "Low Stock Alerts",
-      value: String(lowStockProducts),
-      trend: "Products at or below reorder threshold",
-      tone: "red"
-    },
-    {
-      key: "cancelled",
-      label: "Cancelled Orders",
-      value: String(cancelledOrders),
-      trend: "Cancelled orders across all periods",
-      tone: "red"
-    }
   ];
 
   const recentOrders = [...orders]
@@ -101,12 +97,12 @@ export function buildOverviewViewModel({ dashboard, orders, inventory }) {
       totalPrice: order.totalPrice,
       paymentStatus: order.paymentStatus,
       orderStatus: order.orderStatus,
-      createdAt: order.createdAt
+      createdAt: order.createdAt,
     }));
 
   return {
     firstRowCards,
     executiveCards,
-    recentOrders
+    recentOrders,
   };
 }

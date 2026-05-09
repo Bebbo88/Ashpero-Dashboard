@@ -1,6 +1,6 @@
 import { DataGrid } from "@mui/x-data-grid";
 import { formatCurrency, formatDateTime } from "../../../utils/formatters";
-import { formatList, formatSizes } from "./helpers";
+import { formatList } from "./helpers";
 
 function ProductsTableCard({
   filteredRows,
@@ -17,14 +17,17 @@ function ProductsTableCard({
   onChangeStockDraft,
   onSaveStock,
   onStartEdit,
-  onRemoveProduct
+  onRemoveProduct,
 }) {
   return (
     <article className="panel p-4">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h3 className="text-sm font-bold text-slate-900">Products</h3>
-          <p className="text-xs text-slate-500">Edit, delete, patch stock, and filter by category, product type, and skin type.</p>
+          <p className="text-xs text-slate-500">
+            Edit, delete, patch stock, and filter by category, product type, and
+            skin type.
+          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -86,29 +89,47 @@ function ProductsTableCard({
               field: "name_en",
               headerName: "Name EN",
               minWidth: 160,
-              flex: 1
+              flex: 1,
             },
             {
               field: "name_ar",
               headerName: "Name AR",
               minWidth: 140,
-              flex: 1
+              flex: 1,
             },
             {
               field: "category",
               headerName: "Category",
               minWidth: 140,
-              flex: 0.9
+              flex: 0.9,
             },
             {
-              field: "sizes",
-              headerName: "Sizes",
-              minWidth: 180,
-              flex: 1,
+              field: "variants",
+              headerName: "Variants",
+              minWidth: 320,
+              flex: 1.8,
               sortable: false,
+
               renderCell: (params) => (
-                <span className="truncate text-xs text-slate-700">{formatSizes(params.row.sizes)}</span>
-              )
+                <div className="flex flex-col gap-1 py-2">
+                  {(params.row.variants || []).map((variant, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center gap-2 text-xs"
+                    >
+                      <span className="rounded bg-slate-100 px-2 py-1 font-semibold">
+                        {variant.size}
+                      </span>
+
+                      <span>{formatCurrency(variant.price)}</span>
+
+                      <span className="text-slate-500">
+                        Stock: {variant.stock}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ),
             },
             {
               field: "productType",
@@ -117,8 +138,10 @@ function ProductsTableCard({
               flex: 1,
               sortable: false,
               renderCell: (params) => (
-                <span className="truncate text-xs text-slate-700">{formatList(params.row.productType)}</span>
-              )
+                <span className="truncate text-xs text-slate-700">
+                  {formatList(params.row.productType)}
+                </span>
+              ),
             },
             {
               field: "skinType",
@@ -127,62 +150,33 @@ function ProductsTableCard({
               flex: 1,
               sortable: false,
               renderCell: (params) => (
-                <span className="truncate text-xs text-slate-700">{formatList(params.row.skinType)}</span>
-              )
+                <span className="truncate text-xs text-slate-700">
+                  {formatList(params.row.skinType)}
+                </span>
+              ),
             },
-            {
-              field: "price",
-              headerName: "Price",
-              minWidth: 100,
-              flex: 0.7,
-              valueFormatter: (value) => formatCurrency(value)
-            },
-            {
-              field: "stock",
-              headerName: "Stock",
-              minWidth: 190,
-              flex: 1.2,
-              sortable: false,
-              renderCell: (params) => (
-                <div className="flex w-full items-center gap-2">
-                  <input
-                    type="number"
-                    min="0"
-                    step="1"
-                    className="w-20 rounded border border-slate-300 px-2 py-1 text-xs"
-                    value={stockDraft[params.row.id] ?? params.row.stock}
-                    onChange={(event) => onChangeStockDraft(params.row.id, event.target.value)}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => onSaveStock(params.row.id, params.row.stock)}
-                    className="table-action-btn table-action-btn--neutral"
-                  >
-                    Save
-                  </button>
-                </div>
-              )
-            },
+
             {
               field: "isActive",
               headerName: "Active",
               minWidth: 80,
               flex: 0.5,
-              valueFormatter: (value) => (value ? "Yes" : "No")
+              valueFormatter: (value) => (value ? "Yes" : "No"),
             },
             {
               field: "isBestSeller",
               headerName: "Best Seller",
               minWidth: 110,
               flex: 0.7,
-              valueFormatter: (value) => (value ? "Yes" : "No")
+              valueFormatter: (value) => (value ? "Yes" : "No"),
             },
             {
               field: "updatedAt",
               headerName: "Updated",
               minWidth: 170,
               flex: 1,
-              valueFormatter: (value, row) => formatDateTime(value || row.createdAt)
+              valueFormatter: (value, row) =>
+                formatDateTime(value || row.createdAt),
             },
             {
               field: "actions",
@@ -207,28 +201,28 @@ function ProductsTableCard({
                     Delete
                   </button>
                 </div>
-              )
-            }
+              ),
+            },
           ]}
           pageSizeOptions={[10, 20, 50]}
           initialState={{
             pagination: {
               paginationModel: {
                 pageSize: 10,
-                page: 0
-              }
-            }
+                page: 0,
+              },
+            },
           }}
           disableRowSelectionOnClick
           sx={{
             border: 0,
             "& .MuiDataGrid-columnHeaders": {
               backgroundColor: "#f8fafc",
-              borderBottomColor: "#e2e8f0"
+              borderBottomColor: "#e2e8f0",
             },
             "& .MuiDataGrid-cell": {
-              borderBottomColor: "#eef2ff"
-            }
+              borderBottomColor: "#eef2ff",
+            },
           }}
         />
       </div>
