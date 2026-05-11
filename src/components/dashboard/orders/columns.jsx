@@ -10,39 +10,39 @@ export function getOrdersColumns({
   onStatusSave,
   onPaymentStatusChange,
   onPaymentStatusSave,
-  onRequestOrderDetails
+  onRequestOrderDetails,
 }) {
   return [
     {
       field: "merchantOrderId",
       headerName: "Order Ref",
       minWidth: 150,
-      flex: 0.9
+      flex: 0.9,
     },
     {
       field: "customerName",
       headerName: "Customer",
       minWidth: 140,
-      flex: 1
+      flex: 1,
     },
     {
       field: "phone",
       headerName: "Phone",
       minWidth: 130,
-      flex: 1
+      flex: 1,
     },
     {
       field: "itemsCount",
       headerName: "Items",
       minWidth: 80,
-      flex: 0.6
+      flex: 0.6,
     },
     {
       field: "totalPrice",
       headerName: "Total",
       minWidth: 110,
       flex: 0.8,
-      valueFormatter: (value) => formatCurrency(value)
+      valueFormatter: (value) => formatCurrency(value),
     },
     {
       field: "paymentStatus",
@@ -51,7 +51,8 @@ export function getOrdersColumns({
       flex: 1.4,
       sortable: false,
       renderCell: (params) => {
-        const isCashOnDelivery = params.row.paymentMethod === "cash_on_delivery";
+        const isCashOnDelivery =
+          params.row.paymentMethod === "cash_on_delivery";
 
         if (!isCashOnDelivery) {
           return (
@@ -59,8 +60,8 @@ export function getOrdersColumns({
               <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-700">
                 {params.row.paymentStatus}
               </span>
-              <span className="text-[11px] uppercase tracking-[0.08em] text-slate-400">
-                Card
+              <span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-600">
+                {params.row.paymentMethod || "COD"}
               </span>
             </div>
           );
@@ -71,7 +72,9 @@ export function getOrdersColumns({
             <select
               className="w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-semibold"
               value={resolvePaymentStatus(params.row)}
-              onChange={(event) => onPaymentStatusChange(params.row.id, event.target.value)}
+              onChange={(event) =>
+                onPaymentStatusChange(params.row.id, event.target.value)
+              }
             >
               {paymentStatuses.map((status) => (
                 <option key={status} value={status}>
@@ -81,7 +84,9 @@ export function getOrdersColumns({
             </select>
             <button
               type="button"
-              onClick={() => onPaymentStatusSave(params.row.id, params.row.paymentStatus)}
+              onClick={() =>
+                onPaymentStatusSave(params.row.id, params.row.paymentStatus)
+              }
               disabled={mutationStatus === "loading"}
               className="table-action-btn table-action-btn--neutral disabled:opacity-60"
             >
@@ -89,14 +94,14 @@ export function getOrdersColumns({
             </button>
           </div>
         );
-      }
+      },
     },
     {
       field: "createdAt",
       headerName: "Created",
       minWidth: 170,
       flex: 1,
-      valueFormatter: (value) => formatDateTime(value)
+      valueFormatter: (value) => formatDateTime(value),
     },
     {
       field: "orderStatus",
@@ -109,7 +114,9 @@ export function getOrdersColumns({
           <select
             className="w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-semibold"
             value={resolveStatus(params.row)}
-            onChange={(event) => onStatusChange(params.row.id, event.target.value)}
+            onChange={(event) =>
+              onStatusChange(params.row.id, event.target.value)
+            }
           >
             {statuses.map((status) => (
               <option key={status} value={status}>
@@ -126,7 +133,7 @@ export function getOrdersColumns({
             Save
           </button>
         </div>
-      )
+      ),
     },
     {
       field: "detail",
@@ -142,7 +149,7 @@ export function getOrdersColumns({
         >
           View
         </button>
-      )
-    }
+      ),
+    },
   ];
 }
