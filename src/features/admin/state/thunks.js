@@ -192,13 +192,14 @@ export const updateProductStock = createAsyncThunk(
 
 export const createOffer = createAsyncThunk(
   "admin/createOffer",
-  async (body, { getState, rejectWithValue }) => {
+  async (formData, { getState, rejectWithValue }) => {
     try {
       const token = getState().auth.token;
       const response = await apiRequest("/admin/offers", {
         method: "POST",
         token,
-        body
+        body: formData,
+        isFormData: true
       });
 
       return {
@@ -213,13 +214,14 @@ export const createOffer = createAsyncThunk(
 
 export const updateOffer = createAsyncThunk(
   "admin/updateOffer",
-  async ({ offerId, body }, { getState, rejectWithValue }) => {
+  async ({ offerId, formData }, { getState, rejectWithValue }) => {
     try {
       const token = getState().auth.token;
       const response = await apiRequest(`/admin/offers/${offerId}`, {
         method: "PUT",
         token,
-        body
+        body: formData,
+        isFormData: true
       });
 
       return {

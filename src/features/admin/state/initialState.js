@@ -24,6 +24,8 @@ const initialState = {
   products: [],
   content: {
     heroImages: [],
+    topBannerText_en: "",
+    topBannerText_ar: "",
     banners: [],
     spotlightImages: []
   }

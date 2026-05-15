@@ -52,17 +52,26 @@ export function mapOfferRows(offers) {
     }));
 }
 
-export function buildOfferPayload(form) {
-  return {
-    title_en: form.title_en.trim(),
-    title_ar: form.title_ar.trim(),
-    discountType: form.discountType,
-    discountValue: Number(form.discountValue),
-    startDate: form.startDate,
-    endDate: form.endDate,
-    productIds: form.productIds,
-    isActive: form.isActive
-  };
+export function buildOfferFormData(form, popupImageFile) {
+  const formData = new FormData();
+
+  formData.append("title_en", form.title_en.trim());
+  formData.append("title_ar", form.title_ar.trim());
+  formData.append("discountType", form.discountType);
+  formData.append("discountValue", String(Number(form.discountValue)));
+  formData.append("startDate", form.startDate);
+  formData.append("endDate", form.endDate);
+  formData.append("isActive", String(form.isActive));
+
+  for (const productId of form.productIds) {
+    formData.append("productIds", productId);
+  }
+
+  if (popupImageFile) {
+    formData.append("popupImage", popupImageFile);
+  }
+
+  return formData;
 }
 
 export function normalizeOfferProductIds(productIds) {

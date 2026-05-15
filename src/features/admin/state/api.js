@@ -4,6 +4,8 @@ import { getErrorMessage } from "./helpers";
 
 const EMPTY_CONTENT = {
   heroImages: [],
+  topBannerText_en: "",
+  topBannerText_ar: "",
   banners: [],
   spotlightImages: []
 };
