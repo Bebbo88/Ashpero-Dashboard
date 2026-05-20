@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAppDispatch } from "../../../app/hooks";
 import { updateSiteContent } from "../../../features/admin/adminSlice";
-import { buildContentFormData } from "./helpers";
+import { buildContentFormData, toDateTimeInputValue } from "./helpers";
 
 function ContentPanel({ content, mutationStatus }) {
   const dispatch = useAppDispatch();
@@ -10,6 +10,8 @@ function ContentPanel({ content, mutationStatus }) {
   const [heroImageFiles, setHeroImageFiles] = useState([]);
   const [bannerFiles, setBannerFiles] = useState([]);
   const [spotlightImageFiles, setSpotlightImageFiles] = useState([]);
+  const [popupImageFile, setPopupImageFile] = useState(null);
+  const [popupExpiresAt, setPopupExpiresAt] = useState("");
 
   useEffect(() => {
     setTopBannerTextEn(content.topBannerText_en || "");
@@ -17,6 +19,8 @@ function ContentPanel({ content, mutationStatus }) {
     setHeroImageFiles([]);
     setBannerFiles([]);
     setSpotlightImageFiles([]);
+    setPopupImageFile(null);
+    setPopupExpiresAt(toDateTimeInputValue(content.popupExpiresAt));
   }, [content]);
 
   async function handleSubmit(event) {
@@ -27,7 +31,9 @@ function ContentPanel({ content, mutationStatus }) {
       topBannerTextAr,
       heroImageFiles,
       bannerFiles,
-      spotlightImageFiles
+      spotlightImageFiles,
+      popupImageFile,
+      popupExpiresAt
     });
 
     try {
@@ -35,6 +41,7 @@ function ContentPanel({ content, mutationStatus }) {
       setHeroImageFiles([]);
       setBannerFiles([]);
       setSpotlightImageFiles([]);
+      setPopupImageFile(null);
     } catch (_error) {
       // Error state is surfaced through admin slice.
     }
@@ -112,6 +119,34 @@ function ContentPanel({ content, mutationStatus }) {
             </span>
           </label>
 
+          <label className="text-sm font-semibold text-slate-700">
+            Popup Offer Image
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(event) => setPopupImageFile(event.target.files?.[0] || null)}
+              className="file-upload-input mt-1.5"
+            />
+            <span className="mt-1 block text-xs text-slate-500">
+              {popupImageFile
+                ? `Selected: ${popupImageFile.name}`
+                : content.popupImage
+                  ? `Current popup image: ${content.popupImage}`
+                  : "Optional"}
+            </span>
+          </label>
+
+          <label className="text-sm font-semibold text-slate-700">
+            Popup Offer Ends At
+            <input
+              type="datetime-local"
+              value={popupExpiresAt}
+              onChange={(event) => setPopupExpiresAt(event.target.value)}
+              required={Boolean(popupImageFile || content.popupImage)}
+              className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+            />
+          </label>
+
           <button
             type="submit"
             disabled={mutationStatus === "loading"}
@@ -124,7 +159,7 @@ function ContentPanel({ content, mutationStatus }) {
 
       <article className="panel p-4">
         <h3 className="text-sm font-bold text-slate-900">Current Content Snapshot</h3>
-        <div className="mt-3 grid gap-3 lg:grid-cols-4">
+        <div className="mt-3 grid gap-3 lg:grid-cols-5">
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
               Top Banner Text
@@ -168,6 +203,16 @@ function ContentPanel({ content, mutationStatus }) {
                 </li>
               ))}
             </ul>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+              Popup Offer
+            </p>
+            <div className="mt-2 space-y-1 text-xs text-slate-700">
+              <p className="truncate">Image: {content.popupImage || "-"}</p>
+              <p className="truncate">Ends: {content.popupExpiresAt || "-"}</p>
+            </div>
           </div>
         </div>
       </article>

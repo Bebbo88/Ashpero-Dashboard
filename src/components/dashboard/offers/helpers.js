@@ -52,7 +52,7 @@ export function mapOfferRows(offers) {
     }));
 }
 
-export function buildOfferFormData(form, popupImageFile) {
+export function buildOfferFormData(form) {
   const formData = new FormData();
 
   formData.append("title_en", form.title_en.trim());
@@ -65,10 +65,6 @@ export function buildOfferFormData(form, popupImageFile) {
 
   for (const productId of form.productIds) {
     formData.append("productIds", productId);
-  }
-
-  if (popupImageFile) {
-    formData.append("popupImage", popupImageFile);
   }
 
   return formData;

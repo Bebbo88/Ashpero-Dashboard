@@ -16,8 +16,6 @@ import { getOffersColumns } from "./columns";
 function OffersPanel({ offers, products, mutationStatus }) {
   const dispatch = useAppDispatch();
   const [form, setForm] = useState(INITIAL_FORM);
-  const [popupImageFile, setPopupImageFile] = useState(null);
-  const [editingPopupImage, setEditingPopupImage] = useState("");
   const [editingOfferId, setEditingOfferId] = useState("");
 
   const availableProducts = useMemo(() => getSortedProducts(products), [products]);
@@ -51,15 +49,13 @@ function OffersPanel({ offers, products, mutationStatus }) {
 
   function resetForm() {
     setForm(INITIAL_FORM);
-    setPopupImageFile(null);
-    setEditingPopupImage("");
     setEditingOfferId("");
   }
 
   async function handleSubmit(event) {
     event.preventDefault();
 
-    const formData = buildOfferFormData(form, popupImageFile);
+    const formData = buildOfferFormData(form);
 
     try {
       if (editingOfferId) {
@@ -76,8 +72,6 @@ function OffersPanel({ offers, products, mutationStatus }) {
 
   function startEdit(row) {
     setEditingOfferId(row.id);
-    setPopupImageFile(null);
-    setEditingPopupImage(row.popupImage || "");
     setForm({
       title_en: row.title_en || row.title || "",
       title_ar: row.title_ar || "",
@@ -181,23 +175,6 @@ function OffersPanel({ offers, products, mutationStatus }) {
             </select>
             <span className="mt-1 block text-xs text-slate-500">
               Selected products: {form.productIds.length || 0}
-            </span>
-          </label>
-
-          <label className="text-sm font-semibold text-slate-700 md:col-span-2">
-            Popup Image
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(event) => setPopupImageFile(event.target.files?.[0] || null)}
-              className="file-upload-input mt-1.5"
-            />
-            <span className="mt-1 block text-xs text-slate-500">
-              {popupImageFile
-                ? `Selected: ${popupImageFile.name}`
-                : editingPopupImage
-                  ? `Current popup image: ${editingPopupImage}`
-                  : "Optional"}
             </span>
           </label>
 

@@ -7,7 +7,9 @@ const EMPTY_CONTENT = {
   topBannerText_en: "",
   topBannerText_ar: "",
   banners: [],
-  spotlightImages: []
+  spotlightImages: [],
+  popupImage: "",
+  popupExpiresAt: null
 };
 
 export const adminApi = createApi({

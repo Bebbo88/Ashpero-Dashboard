@@ -3,7 +3,9 @@ export function buildContentFormData({
   topBannerTextAr,
   heroImageFiles,
   bannerFiles,
-  spotlightImageFiles
+  spotlightImageFiles,
+  popupImageFile,
+  popupExpiresAt
 }) {
   const formData = new FormData();
 
@@ -22,5 +24,40 @@ export function buildContentFormData({
     formData.append("spotlightImages", file);
   }
 
+  if (popupImageFile) {
+    formData.append("popupImage", popupImageFile);
+  }
+
+  formData.append("popupExpiresAt", toIsoDateTimeFromInput(popupExpiresAt));
+
   return formData;
+}
+
+export function toDateTimeInputValue(value) {
+  if (!value) {
+    return "";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return localDate.toISOString().slice(0, 16);
+}
+
+export function toIsoDateTimeFromInput(value) {
+  if (!value) {
+    return "";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return date.toISOString();
 }

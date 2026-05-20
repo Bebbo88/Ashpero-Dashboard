@@ -27,7 +27,9 @@ const initialState = {
     topBannerText_en: "",
     topBannerText_ar: "",
     banners: [],
-    spotlightImages: []
+    spotlightImages: [],
+    popupImage: "",
+    popupExpiresAt: null
   }
 };
 

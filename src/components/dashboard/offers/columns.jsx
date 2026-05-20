@@ -8,13 +8,6 @@ export function getOffersColumns({ onStartEdit, onRemoveOffer }) {
     { field: "discountValue", headerName: "Value", minWidth: 100, flex: 0.7 },
     { field: "productsCount", headerName: "Products", minWidth: 100, flex: 0.6 },
     {
-      field: "popupImage",
-      headerName: "Popup",
-      minWidth: 90,
-      flex: 0.5,
-      valueFormatter: (value) => (value ? "Yes" : "No")
-    },
-    {
       field: "startDate",
       headerName: "Start",
       minWidth: 150,
