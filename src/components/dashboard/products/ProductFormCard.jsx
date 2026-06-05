@@ -272,7 +272,7 @@ function ProductFormCard({
           <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 md:col-span-2">
             <p>Current product images: {editingPreview.images.length}</p>
             <p className="mt-1 text-[11px]">
-              Uploading new files appends to current product images.
+              Uploading new images will replace the current product images.
             </p>
           </div>
         ) : null}
