@@ -16,7 +16,7 @@ function TopBar({
   return (
     <header className="panel mb-4 flex flex-col gap-3 px-4 py-4 md:flex-row md:items-center md:justify-between">
       <div>
-        <h2 className="text-lg font-bold text-slate-900">Welcome, Ashpero</h2>
+        <h2 className="text-lg font-bold text-slate-900">Welcome, Ashperoo</h2>
         <p className="text-sm text-slate-600">
           Last sync:{" "}
           {lastUpdatedAt

@@ -15,7 +15,7 @@ const ICONS = {
   offers: LocalOfferRoundedIcon,
   coupons: ConfirmationNumberRoundedIcon,
   tips: LightbulbRoundedIcon,
-  content: ArticleRoundedIcon
+  content: ArticleRoundedIcon,
 };
 
 export const DASHBOARD_SECTIONS = [
@@ -25,7 +25,7 @@ export const DASHBOARD_SECTIONS = [
   { key: "offers", label: "Offers", path: "/dashboard/offers" },
   { key: "coupons", label: "Coupons", path: "/dashboard/coupons" },
   { key: "tips", label: "Tips", path: "/dashboard/tips" },
-  { key: "content", label: "Site Content", path: "/dashboard/content" }
+  { key: "content", label: "Site Content", path: "/dashboard/content" },
 ];
 
 function Sidebar() {
@@ -36,8 +36,12 @@ function Sidebar() {
           <SellRoundedIcon fontSize="small" />
         </span>
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-700">Ashpero</p>
-          <h1 className="text-base font-bold text-slate-900">Admin Control Center</h1>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-700">
+            Ashperoo
+          </p>
+          <h1 className="text-base font-bold text-slate-900">
+            Admin Control Center
+          </h1>
         </div>
       </div>
 
@@ -69,8 +73,8 @@ function Sidebar() {
       <div className="mt-6 rounded-xl border border-orange-200 bg-orange-50 p-3 text-xs text-orange-900">
         <p className="font-semibold">Analytics Guidance</p>
         <p className="mt-1 leading-relaxed">
-          Focus on delivery rate, low-stock risk, and promotion ROI to keep operations and growth in
-          balance.
+          Focus on delivery rate, low-stock risk, and promotion ROI to keep
+          operations and growth in balance.
         </p>
       </div>
     </aside>

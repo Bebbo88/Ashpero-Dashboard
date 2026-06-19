@@ -31,7 +31,7 @@ function LoginView({ onSubmit, status, error, apiBaseUrl }) {
       <section className="panel grid w-full overflow-hidden md:grid-cols-[1.1fr_1fr]">
         <div className="hidden bg-gradient-to-br from-teal-700 via-teal-600 to-cyan-500 p-8 text-white md:block pt-2                    0">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100">
-            Ashpero
+            Ashperoo
           </p>
           <h1 className="mt-4 text-3xl font-bold leading-tight">
             Command your store with one analytics-first dashboard
@@ -76,7 +76,9 @@ function LoginView({ onSubmit, status, error, apiBaseUrl }) {
                   type="button"
                   onClick={() => setIsPasswordVisible((previous) => !previous)}
                   className="absolute inset-y-0 right-0 inline-flex items-center px-3 text-slate-500 transition hover:text-slate-700"
-                  aria-label={isPasswordVisible ? "Hide password" : "Show password"}
+                  aria-label={
+                    isPasswordVisible ? "Hide password" : "Show password"
+                  }
                 >
                   {isPasswordVisible ? (
                     <VisibilityOffRoundedIcon sx={{ fontSize: 18 }} />
