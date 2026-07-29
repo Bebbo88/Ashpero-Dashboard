@@ -9,7 +9,11 @@ const EMPTY_CONTENT = {
   banners: [],
   spotlightImages: [],
   popupImage: "",
-  popupExpiresAt: null
+  popupExpiresAt: null,
+  countdownEnabled: false,
+  countdownTargetDate: null,
+  countdownTitle_en: "",
+  countdownTitle_ar: ""
 };
 
 export const adminApi = createApi({

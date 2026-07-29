@@ -393,6 +393,28 @@ export const updateSiteContent = createAsyncThunk(
   }
 );
 
+export const updateProductVideos = createAsyncThunk(
+  "admin/updateProductVideos",
+  async ({ productId, formData }, { getState, rejectWithValue }) => {
+    try {
+      const token = getState().auth.token;
+      const response = await apiRequest(`/admin/products/${productId}/videos`, {
+        method: "PUT",
+        token,
+        body: formData,
+        isFormData: true
+      });
+
+      return {
+        product: response.data,
+        message: response.message || "Product videos updated"
+      };
+    } catch (error) {
+      return rejectWithValue(getErrorMessage(error));
+    }
+  }
+);
+
 export const mutationThunks = [
   updateOrderStatus,
   updateOrderPaymentStatus,
@@ -400,6 +422,7 @@ export const mutationThunks = [
   updateProduct,
   deleteProduct,
   updateProductStock,
+  updateProductVideos,
   createOffer,
   updateOffer,
   deleteOffer,

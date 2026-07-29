@@ -29,7 +29,11 @@ const initialState = {
     banners: [],
     spotlightImages: [],
     popupImage: "",
-    popupExpiresAt: null
+    popupExpiresAt: null,
+    countdownEnabled: false,
+    countdownTargetDate: null,
+    countdownTitle_en: "",
+    countdownTitle_ar: ""
   }
 };
 

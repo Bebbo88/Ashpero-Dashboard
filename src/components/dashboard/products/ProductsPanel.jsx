@@ -19,6 +19,9 @@ function ProductsPanel({ products, mutationStatus }) {
   const dispatch = useAppDispatch();
   const [form, setForm] = useState(INITIAL_FORM);
   const [productImageFiles, setProductImageFiles] = useState([]);
+  const [beforeImageFile, setBeforeImageFile] = useState(null);
+  const [afterImageFile, setAfterImageFile] = useState(null);
+  const [popupGalleryFiles, setPopupGalleryFiles] = useState([]);
   const [editingProductId, setEditingProductId] = useState("");
   const [editingPreview, setEditingPreview] = useState({
     images: [],
@@ -130,6 +133,9 @@ function ProductsPanel({ products, mutationStatus }) {
   function resetForm() {
     setForm(INITIAL_FORM);
     setProductImageFiles([]);
+    setBeforeImageFile(null);
+    setAfterImageFile(null);
+    setPopupGalleryFiles([]);
     setEditingProductId("");
     setEditingPreview({ images: [] });
     setCustomCategory("");
@@ -201,6 +207,8 @@ function ProductsPanel({ products, mutationStatus }) {
     }));
   }
 
+
+
   function toggleArrayField(fieldName, option) {
     setForm((previous) => {
       const currentValues = Array.isArray(previous[fieldName])
@@ -224,45 +232,84 @@ function ProductsPanel({ products, mutationStatus }) {
 
   function buildFormData() {
     const formData = new FormData();
-    const categoryValue = resolveCategory();
+    const isBundle = Boolean(form.isBundle);
+    const categoryValue = isBundle ? "Bundles" : resolveCategory();
 
     formData.append("name_en", form.name_en.trim());
     formData.append("name_ar", form.name_ar.trim());
     formData.append("description_en", form.description_en.trim());
     formData.append("description_ar", form.description_ar.trim());
-    formData.append("ingredients_en", form.ingredients_en.trim());
-    formData.append("ingredients_ar", form.ingredients_ar.trim());
-    formData.append("howToUse_en", form.howToUse_en.trim());
-    formData.append("howToUse_ar", form.howToUse_ar.trim());
-    formData.append("category", categoryValue);
-    for (const value of form.productType) {
-      formData.append("productType", value);
+
+    if (isBundle) {
+      formData.append("ingredients_en", "Bundle");
+      formData.append("ingredients_ar", "باقة");
+      formData.append("howToUse_en", "Bundle");
+      formData.append("howToUse_ar", "باقة");
+    } else {
+      formData.append("ingredients_en", form.ingredients_en.trim());
+      formData.append("ingredients_ar", form.ingredients_ar.trim());
+      formData.append("howToUse_en", form.howToUse_en.trim());
+      formData.append("howToUse_ar", form.howToUse_ar.trim());
     }
-    for (const value of form.skinType) {
-      formData.append("skinType", value);
+
+    formData.append("category", categoryValue);
+
+    if (!isBundle) {
+      for (const value of form.productType) {
+        formData.append("productType", value);
+      }
+      for (const value of form.skinType) {
+        formData.append("skinType", value);
+      }
     }
 
     formData.append("isActive", String(form.isActive));
     formData.append("isBestSeller", String(form.isBestSeller));
-    const variantsPayload = form.variants
-      .map((variant) => ({
-        size: String(variant.size || "").trim(),
+    formData.append("isBundle", String(form.isBundle || false));
+    formData.append("bundleIncludes", JSON.stringify(form.bundleIncludes || []));
+    if (!isBundle && form.oldPrice !== undefined && form.oldPrice !== "") {
+      formData.append("oldPrice", String(form.oldPrice));
+    }
 
-        price: Number(variant.price),
+    const variantsPayload = isBundle
+      ? [
+          {
+            size: "default",
+            price: Number(form.price),
+            stock: Number(form.stock),
+          },
+        ]
+      : form.variants
+          .map((variant) => ({
+            size: String(variant.size || "").trim(),
 
-        stock: Number(variant.stock),
-      }))
-      .filter(
-        (variant) =>
-          variant.size &&
-          Number.isFinite(variant.price) &&
-          Number.isFinite(variant.stock),
-      );
+            price: Number(variant.price),
+
+            stock: Number(variant.stock),
+          }))
+          .filter(
+            (variant) =>
+              variant.size &&
+              Number.isFinite(variant.price) &&
+              Number.isFinite(variant.stock),
+          );
 
     formData.append("variants", JSON.stringify(variantsPayload));
 
     for (const file of productImageFiles) {
       formData.append("images", file);
+    }
+
+    if (beforeImageFile) {
+      formData.append("beforeImage", beforeImageFile);
+    }
+
+    if (afterImageFile) {
+      formData.append("afterImage", afterImageFile);
+    }
+
+    for (const file of popupGalleryFiles) {
+      formData.append("popupGalleryImages", file);
     }
 
     return formData;
@@ -271,7 +318,8 @@ function ProductsPanel({ products, mutationStatus }) {
   async function handleSubmit(event) {
     event.preventDefault();
 
-    const categoryValue = resolveCategory();
+    const isBundle = Boolean(form.isBundle);
+    const categoryValue = isBundle ? "Bundles" : resolveCategory();
 
     if (!categoryValue) {
       return;
@@ -321,6 +369,15 @@ function ProductsPanel({ products, mutationStatus }) {
       isActive: typeof row.isActive === "boolean" ? row.isActive : true,
       isBestSeller:
         typeof row.isBestSeller === "boolean" ? row.isBestSeller : false,
+      isBundle: typeof row.isBundle === "boolean" ? row.isBundle : false,
+      bundleIncludes: Array.isArray(row.bundleIncludes) ? row.bundleIncludes : [],
+      oldPrice: row.oldPrice !== undefined ? String(row.oldPrice) : "",
+      price: (row.isBundle && Array.isArray(row.variants) && row.variants[0])
+        ? String(row.variants[0].price)
+        : "",
+      stock: (row.isBundle && Array.isArray(row.variants) && row.variants[0])
+        ? String(row.variants[0].stock)
+        : "",
     });
 
     setCustomCategory("");
@@ -357,6 +414,15 @@ function ProductsPanel({ products, mutationStatus }) {
         onToggleSkinType={(option) => toggleArrayField("skinType", option)}
         onImageFilesChange={(event) =>
           setProductImageFiles(Array.from(event.target.files || []))
+        }
+        onBeforeImageChange={(event) =>
+          setBeforeImageFile(event.target.files?.[0] || null)
+        }
+        onAfterImageChange={(event) =>
+          setAfterImageFile(event.target.files?.[0] || null)
+        }
+        onPopupGalleryChange={(event) =>
+          setPopupGalleryFiles(Array.from(event.target.files || []))
         }
         onSubmit={handleSubmit}
         onReset={resetForm}

@@ -11,6 +11,7 @@ import {
   updateProduct,
   deleteProduct,
   updateProductStock,
+  updateProductVideos,
   createOffer,
   updateOffer,
   deleteOffer,
@@ -231,6 +232,10 @@ const adminSlice = createSlice({
           state.dashboard.lowStockProducts = Math.max(0, Number(state.dashboard.lowStockProducts || 0) + delta);
         }
 
+        state.lastMessage = action.payload.message;
+      })
+      .addCase(updateProductVideos.fulfilled, (state, action) => {
+        state.products = replaceById(state.products, action.payload.product);
         state.lastMessage = action.payload.message;
       })
       .addCase(createOffer.fulfilled, (state, action) => {

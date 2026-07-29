@@ -5,7 +5,11 @@ export function buildContentFormData({
   bannerFiles,
   spotlightImageFiles,
   popupImageFile,
-  popupExpiresAt
+  popupExpiresAt,
+  countdownEnabled,
+  countdownTargetDate,
+  countdownTitleEn,
+  countdownTitleAr
 }) {
   const formData = new FormData();
 
@@ -29,6 +33,10 @@ export function buildContentFormData({
   }
 
   formData.append("popupExpiresAt", toIsoDateTimeFromInput(popupExpiresAt));
+  formData.append("countdownEnabled", String(Boolean(countdownEnabled)));
+  formData.append("countdownTargetDate", toIsoDateTimeFromInput(countdownTargetDate));
+  formData.append("countdownTitle_en", (countdownTitleEn || "").trim());
+  formData.append("countdownTitle_ar", (countdownTitleAr || "").trim());
 
   return formData;
 }

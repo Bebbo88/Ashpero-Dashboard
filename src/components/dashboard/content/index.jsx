@@ -12,6 +12,10 @@ function ContentPanel({ content, mutationStatus }) {
   const [spotlightImageFiles, setSpotlightImageFiles] = useState([]);
   const [popupImageFile, setPopupImageFile] = useState(null);
   const [popupExpiresAt, setPopupExpiresAt] = useState("");
+  const [countdownEnabled, setCountdownEnabled] = useState(false);
+  const [countdownTargetDate, setCountdownTargetDate] = useState("");
+  const [countdownTitleEn, setCountdownTitleEn] = useState("");
+  const [countdownTitleAr, setCountdownTitleAr] = useState("");
 
   useEffect(() => {
     setTopBannerTextEn(content.topBannerText_en || "");
@@ -21,6 +25,10 @@ function ContentPanel({ content, mutationStatus }) {
     setSpotlightImageFiles([]);
     setPopupImageFile(null);
     setPopupExpiresAt(toDateTimeInputValue(content.popupExpiresAt));
+    setCountdownEnabled(Boolean(content.countdownEnabled));
+    setCountdownTargetDate(toDateTimeInputValue(content.countdownTargetDate));
+    setCountdownTitleEn(content.countdownTitle_en || "");
+    setCountdownTitleAr(content.countdownTitle_ar || "");
   }, [content]);
 
   async function handleSubmit(event) {
@@ -33,7 +41,11 @@ function ContentPanel({ content, mutationStatus }) {
       bannerFiles,
       spotlightImageFiles,
       popupImageFile,
-      popupExpiresAt
+      popupExpiresAt,
+      countdownEnabled,
+      countdownTargetDate,
+      countdownTitleEn,
+      countdownTitleAr
     });
 
     try {
@@ -53,7 +65,7 @@ function ContentPanel({ content, mutationStatus }) {
         <div className="mb-3">
           <h3 className="text-sm font-bold text-slate-900">Site Content Controls</h3>
           <p className="text-xs text-slate-500">
-            Manage the top banner text and upload images for the controlled visual placements.
+            Manage the top banner text, countdown timer, and upload images for controlled visual placements.
           </p>
         </div>
         <form className="grid gap-3" onSubmit={handleSubmit}>
@@ -76,6 +88,57 @@ function ContentPanel({ content, mutationStatus }) {
               className="mt-1.5 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
             />
           </label>
+
+          {/* Countdown Timer Section */}
+          <div className="rounded-xl border border-teal-200 bg-teal-50/50 p-4 space-y-3 my-1">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-bold text-teal-950">Top Banner Countdown Timer (عداد تنازلي)</span>
+              <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-teal-900">
+                <input
+                  type="checkbox"
+                  checked={countdownEnabled}
+                  onChange={(e) => setCountdownEnabled(e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300 text-teal-700 focus:ring-teal-500"
+                />
+                Enable Countdown Timer
+              </label>
+            </div>
+
+            {countdownEnabled && (
+              <div className="grid gap-3 sm:grid-cols-3 pt-2">
+                <label className="text-xs font-semibold text-slate-700">
+                  Target Date & Time (تاريخ الانتهاء)
+                  <input
+                    type="datetime-local"
+                    value={countdownTargetDate}
+                    onChange={(e) => setCountdownTargetDate(e.target.value)}
+                    required={countdownEnabled}
+                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-xs bg-white"
+                  />
+                </label>
+
+                <label className="text-xs font-semibold text-slate-700">
+                  Timer Label EN (e.g., Offer Ends In)
+                  <input
+                    value={countdownTitleEn}
+                    onChange={(e) => setCountdownTitleEn(e.target.value)}
+                    placeholder="Offer Ends In:"
+                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-xs bg-white"
+                  />
+                </label>
+
+                <label className="text-xs font-semibold text-slate-700">
+                  Timer Label AR (مثال: ينتهي العرض خلال)
+                  <input
+                    value={countdownTitleAr}
+                    onChange={(e) => setCountdownTitleAr(e.target.value)}
+                    placeholder="ينتهي العرض خلال:"
+                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-xs bg-white"
+                  />
+                </label>
+              </div>
+            )}
+          </div>
 
           <label className="text-sm font-semibold text-slate-700">
             Hero Images Upload (multiple files)
@@ -150,7 +213,7 @@ function ContentPanel({ content, mutationStatus }) {
           <button
             type="submit"
             disabled={mutationStatus === "loading"}
-            className="w-fit rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+            className="w-fit rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60 hover:bg-teal-800 transition-colors cursor-pointer"
           >
             Save Content
           </button>
@@ -159,7 +222,7 @@ function ContentPanel({ content, mutationStatus }) {
 
       <article className="panel p-4">
         <h3 className="text-sm font-bold text-slate-900">Current Content Snapshot</h3>
-        <div className="mt-3 grid gap-3 lg:grid-cols-5">
+        <div className="mt-3 grid gap-3 lg:grid-cols-6">
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
               Top Banner Text
@@ -167,6 +230,23 @@ function ContentPanel({ content, mutationStatus }) {
             <div className="mt-2 space-y-1 text-xs text-slate-700">
               <p className="truncate">EN: {content.topBannerText_en || "-"}</p>
               <p className="truncate">AR: {content.topBannerText_ar || "-"}</p>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+              Countdown Timer
+            </p>
+            <div className="mt-2 space-y-1 text-xs text-slate-700">
+              <p className="font-semibold text-teal-800">
+                Status: {content.countdownEnabled ? "Enabled (نشط)" : "Disabled"}
+              </p>
+              {content.countdownEnabled && (
+                <>
+                  <p className="truncate">Target: {content.countdownTargetDate || "-"}</p>
+                  <p className="truncate">Title: {content.countdownTitle_ar || content.countdownTitle_en || "-"}</p>
+                </>
+              )}
             </div>
           </div>
 

@@ -1,4 +1,4 @@
-﻿export const DEFAULT_CATEGORIES = [
+export const DEFAULT_CATEGORIES = [
   "Anti-Aging",
   "Hydration",
   "Glow",
@@ -41,4 +41,9 @@ export const INITIAL_FORM = {
   ],
   isActive: true,
   isBestSeller: false,
+  isBundle: false,
+  bundleIncludes: [],
+  oldPrice: "",
+  price: "",
+  stock: "",
 };

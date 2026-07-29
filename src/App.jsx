@@ -6,6 +6,7 @@ import DashboardLayout from "./components/layout/DashboardLayout";
 import OverviewPanel from "./components/dashboard/overview";
 import OrdersPanel from "./components/dashboard/orders";
 import ProductsPanel from "./components/dashboard/products/ProductsPanel";
+import VideoReviewsPanel from "./components/dashboard/videoReviews/VideoReviewsPanel";
 import OffersPanel from "./components/dashboard/offers";
 import CouponsPanel from "./components/dashboard/coupons";
 import TipsPanel from "./components/dashboard/tips";
@@ -149,6 +150,7 @@ function App() {
           }
         />
         <Route path="products" element={<ProductsPanel products={products} mutationStatus={mutationStatus} />} />
+        <Route path="video-reviews" element={<VideoReviewsPanel products={products} mutationStatus={mutationStatus} />} />
         <Route path="offers" element={<OffersPanel offers={offers} products={products} mutationStatus={mutationStatus} />} />
         <Route path="coupons" element={<CouponsPanel coupons={coupons} mutationStatus={mutationStatus} />} />
         <Route path="tips" element={<TipsPanel tips={tips} mutationStatus={mutationStatus} />} />

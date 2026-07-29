@@ -1,4 +1,4 @@
-﻿import { NavLink } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import DashboardRoundedIcon from "@mui/icons-material/DashboardRounded";
 import Inventory2RoundedIcon from "@mui/icons-material/Inventory2Rounded";
 import ReceiptLongRoundedIcon from "@mui/icons-material/ReceiptLongRounded";
@@ -7,11 +7,13 @@ import ConfirmationNumberRoundedIcon from "@mui/icons-material/ConfirmationNumbe
 import LightbulbRoundedIcon from "@mui/icons-material/LightbulbRounded";
 import ArticleRoundedIcon from "@mui/icons-material/ArticleRounded";
 import SellRoundedIcon from "@mui/icons-material/SellRounded";
+import VideoLibraryRoundedIcon from "@mui/icons-material/VideoLibraryRounded";
 
 const ICONS = {
   overview: DashboardRoundedIcon,
   orders: ReceiptLongRoundedIcon,
   products: Inventory2RoundedIcon,
+  videoReviews: VideoLibraryRoundedIcon,
   offers: LocalOfferRoundedIcon,
   coupons: ConfirmationNumberRoundedIcon,
   tips: LightbulbRoundedIcon,
@@ -22,6 +24,7 @@ export const DASHBOARD_SECTIONS = [
   { key: "overview", label: "Overview", path: "/dashboard/overview" },
   { key: "orders", label: "Orders", path: "/dashboard/orders" },
   { key: "products", label: "Products", path: "/dashboard/products" },
+  { key: "videoReviews", label: "Customer Video Reviews", path: "/dashboard/video-reviews" },
   { key: "offers", label: "Offers", path: "/dashboard/offers" },
   { key: "coupons", label: "Coupons", path: "/dashboard/coupons" },
   { key: "tips", label: "Tips", path: "/dashboard/tips" },
