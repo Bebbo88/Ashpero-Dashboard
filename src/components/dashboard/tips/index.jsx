@@ -120,14 +120,15 @@ function TipsPanel({ tips, mutationStatus }) {
         </div>
 
         <form className="grid gap-3 md:grid-cols-2" onSubmit={handleSubmit}>
-          <h4 className="md:col-span-2 text-xs font-bold uppercase tracking-wide text-slate-600">
-            Video Section
+          <h4 className="md:col-span-2 text-xs font-bold uppercase tracking-wide text-slate-600 flex items-center justify-between">
+            <span>Media Section (Image or Video / صورة أو فيديو)</span>
+            <span className="text-[11px] font-normal text-slate-500">اختر رفع صورة أو فيديو لهذا القسم</span>
           </h4>
           <input
             name="videoTitle_en"
             value={form.videoTitle_en}
             onChange={setField}
-            placeholder="Video Title EN"
+            placeholder="Media Title EN (Heading)"
             required
             className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
           />
@@ -135,21 +136,21 @@ function TipsPanel({ tips, mutationStatus }) {
             name="videoTitle_ar"
             value={form.videoTitle_ar}
             onChange={setField}
-            placeholder="Video Title AR"
+            placeholder="Media Title AR (العنوان)"
             className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
           />
           <input
             name="videoUrl"
             value={form.videoUrl}
             onChange={setField}
-            placeholder="Video URL (optional when uploading file)"
+            placeholder="Media URL (optional when uploading file)"
             className="rounded-lg border border-slate-300 px-3 py-2 text-sm md:col-span-2"
           />
           <label className="text-xs font-semibold text-slate-600 md:col-span-2">
-            Video File
+            Media File (Upload Image or Video / اختر صورة أو فيديو)
             <input
               type="file"
-              accept="video/*"
+              accept="image/*,video/*"
               onChange={(event) => setMediaField("videoFile", event.target.files?.[0] || null)}
               required={!editingTipId && !form.videoUrl.trim()}
               className="file-upload-input mt-1"
