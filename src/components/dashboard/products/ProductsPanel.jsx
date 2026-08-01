@@ -12,7 +12,7 @@ import {
   INITIAL_FORM,
 } from "./constants";
 import { normalizeList } from "./helpers";
-import ProductFormCard from "./ProductFormCard";
+import { ProductFormCard } from "./ProductFormCard";
 import ProductsTableCard from "./ProductsTableCard";
 
 function ProductsPanel({ products, mutationStatus }) {
@@ -199,9 +199,9 @@ function ProductsPanel({ products, mutationStatus }) {
       variants: previous.variants.map((variant, currentIndex) =>
         currentIndex === index
           ? {
-              ...variant,
-              [field]: value,
-            }
+            ...variant,
+            [field]: value,
+          }
           : variant,
       ),
     }));
@@ -219,8 +219,8 @@ function ProductsPanel({ products, mutationStatus }) {
       );
       const nextValues = exists
         ? currentValues.filter(
-            (entry) => entry.toLowerCase() !== option.toLowerCase(),
-          )
+          (entry) => entry.toLowerCase() !== option.toLowerCase(),
+        )
         : [...currentValues, option];
 
       return {
@@ -273,26 +273,26 @@ function ProductsPanel({ products, mutationStatus }) {
 
     const variantsPayload = isBundle
       ? [
-          {
-            size: "default",
-            price: Number(form.price),
-            stock: Number(form.stock),
-          },
-        ]
+        {
+          size: "default",
+          price: Number(form.price),
+          stock: Number(form.stock),
+        },
+      ]
       : form.variants
-          .map((variant) => ({
-            size: String(variant.size || "").trim(),
+        .map((variant) => ({
+          size: String(variant.size || "").trim(),
 
-            price: Number(variant.price),
+          price: Number(variant.price),
 
-            stock: Number(variant.stock),
-          }))
-          .filter(
-            (variant) =>
-              variant.size &&
-              Number.isFinite(variant.price) &&
-              Number.isFinite(variant.stock),
-          );
+          stock: Number(variant.stock),
+        }))
+        .filter(
+          (variant) =>
+            variant.size &&
+            Number.isFinite(variant.price) &&
+            Number.isFinite(variant.stock),
+        );
 
     formData.append("variants", JSON.stringify(variantsPayload));
 
