@@ -141,8 +141,8 @@ export function ProductFormCard({
             </div>
           </div>
           <textarea
-            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-            rows={2}
+            className="rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm min-h-[140px] focus:ring-2 focus:ring-brand-mint/30 focus:border-brand-mint"
+            rows={6}
             name="description_en"
             placeholder="Description (English)"
             value={form.description_en}
@@ -205,8 +205,8 @@ export function ProductFormCard({
             </div>
           </div>
           <textarea
-            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-            rows={2}
+            className="rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm min-h-[140px] focus:ring-2 focus:ring-brand-mint/30 focus:border-brand-mint"
+            rows={6}
             name="description_ar"
             placeholder="Description (Arabic)"
             value={form.description_ar}
