@@ -89,130 +89,176 @@ export function ProductFormCard({
 
         <div className="md:col-span-2 flex flex-col gap-1">
           <div className="flex items-center justify-between text-xs font-medium text-slate-500">
-            <span>Description (English)</span>
+            <span className="font-semibold text-slate-700">Description (English)</span>
             <div className="flex items-center gap-1.5">
-              <span className="text-[11px] text-slate-400">Quick HTML tags:</span>
+              <span className="text-[11px] text-slate-400 font-normal">Formatting tools:</span>
               <button
                 type="button"
-                onClick={() =>
-                  onFieldChange({
-                    target: {
-                      name: "description_en",
-                      value: (form.description_en || "") + "<b>Bold text</b>",
-                    },
-                  })
-                }
-                className="px-2 py-0.5 rounded border border-slate-300 bg-slate-50 text-[11px] font-bold text-slate-700 hover:bg-slate-100"
+                onClick={() => {
+                  const el = document.getElementById("desc_en_input");
+                  const currentVal = form.description_en || "";
+                  const start = el ? el.selectionStart : currentVal.length;
+                  const end = el ? el.selectionEnd : currentVal.length;
+                  const selectedText = currentVal.substring(start, end) || "Bold text";
+                  const openTag = "<b>";
+                  const closeTag = "</b>";
+                  const newContent = currentVal.substring(0, start) + openTag + selectedText + closeTag + currentVal.substring(end);
+                  onFieldChange({ target: { name: "description_en", value: newContent } });
+                  if (el) setTimeout(() => { el.focus(); el.setSelectionRange(start + openTag.length, start + openTag.length + selectedText.length); }, 0);
+                }}
+                className="px-2.5 py-1 rounded-md border border-slate-300 bg-white hover:bg-slate-100 text-slate-800 font-bold text-xs shadow-xs transition-all flex items-center gap-1 active:scale-95 cursor-pointer"
+                title="Format selected text as Bold"
               >
-                <b>Bold</b>
+                <span className="font-black text-slate-900">B</span> Bold
               </button>
               <button
                 type="button"
-                onClick={() =>
-                  onFieldChange({
-                    target: {
-                      name: "description_en",
-                      value:
-                        (form.description_en || "") +
-                        '<span class="text-orange-500 font-bold">Orange text</span>',
-                    },
-                  })
-                }
-                className="px-2 py-0.5 rounded border border-amber-300 bg-amber-50 text-[11px] font-bold text-amber-700 hover:bg-amber-100"
+                onClick={() => {
+                  const el = document.getElementById("desc_en_input");
+                  const currentVal = form.description_en || "";
+                  const start = el ? el.selectionStart : currentVal.length;
+                  const end = el ? el.selectionEnd : currentVal.length;
+                  const selectedText = currentVal.substring(start, end) || "Orange text";
+                  const openTag = '<span style="color: #f97316; font-weight: bold;">';
+                  const closeTag = "</span>";
+                  const newContent = currentVal.substring(0, start) + openTag + selectedText + closeTag + currentVal.substring(end);
+                  onFieldChange({ target: { name: "description_en", value: newContent } });
+                  if (el) setTimeout(() => { el.focus(); el.setSelectionRange(start + openTag.length, start + openTag.length + selectedText.length); }, 0);
+                }}
+                className="px-2.5 py-1 rounded-md border border-orange-300 bg-orange-50 hover:bg-orange-100 text-orange-700 font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
+                title="Format selected text as Orange"
               >
+                <span className="w-2.5 h-2.5 rounded-full bg-orange-500 inline-block shadow-xs"></span>
                 Orange
               </button>
               <button
                 type="button"
-                onClick={() =>
-                  onFieldChange({
-                    target: {
-                      name: "description_en",
-                      value:
-                        (form.description_en || "") +
-                        '<span class="text-brand-mint font-bold">Mint text</span>',
-                    },
-                  })
-                }
-                className="px-2 py-0.5 rounded border border-emerald-300 bg-emerald-50 text-[11px] font-bold text-emerald-700 hover:bg-emerald-100"
+                onClick={() => {
+                  const el = document.getElementById("desc_en_input");
+                  const currentVal = form.description_en || "";
+                  const start = el ? el.selectionStart : currentVal.length;
+                  const end = el ? el.selectionEnd : currentVal.length;
+                  const selectedText = currentVal.substring(start, end) || "Mint text";
+                  const openTag = '<span style="color: #0d9488; font-weight: bold;">';
+                  const closeTag = "</span>";
+                  const newContent = currentVal.substring(0, start) + openTag + selectedText + closeTag + currentVal.substring(end);
+                  onFieldChange({ target: { name: "description_en", value: newContent } });
+                  if (el) setTimeout(() => { el.focus(); el.setSelectionRange(start + openTag.length, start + openTag.length + selectedText.length); }, 0);
+                }}
+                className="px-2.5 py-1 rounded-md border border-teal-300 bg-teal-50 hover:bg-teal-100 text-teal-800 font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
+                title="Format selected text as Mint Green"
               >
+                <span className="w-2.5 h-2.5 rounded-full bg-teal-600 inline-block shadow-xs"></span>
                 Mint
               </button>
             </div>
           </div>
           <textarea
-            className="rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm min-h-[140px] focus:ring-2 focus:ring-brand-mint/30 focus:border-brand-mint"
-            rows={6}
+            id="desc_en_input"
+            className="rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm min-h-[120px] focus:ring-2 focus:ring-brand-mint/30 focus:border-brand-mint"
+            rows={5}
             name="description_en"
             placeholder="Description (English)"
             value={form.description_en}
             onChange={onFieldChange}
             required
           />
+          {form.description_en && (
+            <div className="mt-1 p-2.5 rounded-lg border border-slate-200 bg-slate-50/80 text-xs">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-1">Live Preview (English):</span>
+              <div
+                className="text-slate-800 leading-relaxed font-normal [&_b]:font-bold [&_strong]:font-bold"
+                dangerouslySetInnerHTML={{ __html: form.description_en }}
+              />
+            </div>
+          )}
         </div>
 
         <div className="md:col-span-2 flex flex-col gap-1">
           <div className="flex items-center justify-between text-xs font-medium text-slate-500">
-            <span>Description (Arabic)</span>
+            <span className="font-semibold text-slate-700">الوصف (بالعربي)</span>
             <div className="flex items-center gap-1.5">
-              <span className="text-[11px] text-slate-400">وسوم منسقة:</span>
+              <span className="text-[11px] text-slate-400 font-normal">أدوات التنسيق:</span>
               <button
                 type="button"
-                onClick={() =>
-                  onFieldChange({
-                    target: {
-                      name: "description_ar",
-                      value: (form.description_ar || "") + "<b>خط عريض</b>",
-                    },
-                  })
-                }
-                className="px-2 py-0.5 rounded border border-slate-300 bg-slate-50 text-[11px] font-bold text-slate-700 hover:bg-slate-100"
+                onClick={() => {
+                  const el = document.getElementById("desc_ar_input");
+                  const currentVal = form.description_ar || "";
+                  const start = el ? el.selectionStart : currentVal.length;
+                  const end = el ? el.selectionEnd : currentVal.length;
+                  const selectedText = currentVal.substring(start, end) || "خط عريض";
+                  const openTag = "<b>";
+                  const closeTag = "</b>";
+                  const newContent = currentVal.substring(0, start) + openTag + selectedText + closeTag + currentVal.substring(end);
+                  onFieldChange({ target: { name: "description_ar", value: newContent } });
+                  if (el) setTimeout(() => { el.focus(); el.setSelectionRange(start + openTag.length, start + openTag.length + selectedText.length); }, 0);
+                }}
+                className="px-2.5 py-1 rounded-md border border-slate-300 bg-white hover:bg-slate-100 text-slate-800 font-bold text-xs shadow-xs transition-all flex items-center gap-1 active:scale-95 cursor-pointer"
+                title="تغليف النص المحدد بخط عريض"
               >
-                <b>عريض</b>
+                <span className="font-black text-slate-900">B</span> عريض
               </button>
               <button
                 type="button"
-                onClick={() =>
-                  onFieldChange({
-                    target: {
-                      name: "description_ar",
-                      value:
-                        (form.description_ar || "") +
-                        '<span class="text-orange-500 font-bold">نص برتقالي</span>',
-                    },
-                  })
-                }
-                className="px-2 py-0.5 rounded border border-amber-300 bg-amber-50 text-[11px] font-bold text-amber-700 hover:bg-amber-100"
+                onClick={() => {
+                  const el = document.getElementById("desc_ar_input");
+                  const currentVal = form.description_ar || "";
+                  const start = el ? el.selectionStart : currentVal.length;
+                  const end = el ? el.selectionEnd : currentVal.length;
+                  const selectedText = currentVal.substring(start, end) || "نص برتقالي";
+                  const openTag = '<span style="color: #f97316; font-weight: bold;">';
+                  const closeTag = "</span>";
+                  const newContent = currentVal.substring(0, start) + openTag + selectedText + closeTag + currentVal.substring(end);
+                  onFieldChange({ target: { name: "description_ar", value: newContent } });
+                  if (el) setTimeout(() => { el.focus(); el.setSelectionRange(start + openTag.length, start + openTag.length + selectedText.length); }, 0);
+                }}
+                className="px-2.5 py-1 rounded-md border border-orange-300 bg-orange-50 hover:bg-orange-100 text-orange-700 font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
+                title="تغليف النص المحدد باللون البرتقالي"
               >
+                <span className="w-2.5 h-2.5 rounded-full bg-orange-500 inline-block shadow-xs"></span>
                 برتقالي
               </button>
               <button
                 type="button"
-                onClick={() =>
-                  onFieldChange({
-                    target: {
-                      name: "description_ar",
-                      value:
-                        (form.description_ar || "") +
-                        '<span class="text-brand-mint font-bold">نص أخضر</span>',
-                    },
-                  })
-                }
-                className="px-2 py-0.5 rounded border border-emerald-300 bg-emerald-50 text-[11px] font-bold text-emerald-700 hover:bg-emerald-100"
+                onClick={() => {
+                  const el = document.getElementById("desc_ar_input");
+                  const currentVal = form.description_ar || "";
+                  const start = el ? el.selectionStart : currentVal.length;
+                  const end = el ? el.selectionEnd : currentVal.length;
+                  const selectedText = currentVal.substring(start, end) || "نص أخضر";
+                  const openTag = '<span style="color: #0d9488; font-weight: bold;">';
+                  const closeTag = "</span>";
+                  const newContent = currentVal.substring(0, start) + openTag + selectedText + closeTag + currentVal.substring(end);
+                  onFieldChange({ target: { name: "description_ar", value: newContent } });
+                  if (el) setTimeout(() => { el.focus(); el.setSelectionRange(start + openTag.length, start + openTag.length + selectedText.length); }, 0);
+                }}
+                className="px-2.5 py-1 rounded-md border border-teal-300 bg-teal-50 hover:bg-teal-100 text-teal-800 font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
+                title="تغليف النص المحدد باللون الأخضر المينت"
               >
+                <span className="w-2.5 h-2.5 rounded-full bg-teal-600 inline-block shadow-xs"></span>
                 أخضر
               </button>
             </div>
           </div>
           <textarea
-            className="rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm min-h-[140px] focus:ring-2 focus:ring-brand-mint/30 focus:border-brand-mint"
-            rows={6}
+            id="desc_ar_input"
+            className="rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm min-h-[120px] focus:ring-2 focus:ring-brand-mint/30 focus:border-brand-mint"
+            rows={5}
             name="description_ar"
             placeholder="Description (Arabic)"
             value={form.description_ar}
             onChange={onFieldChange}
             required
           />
+          {form.description_ar && (
+            <div className="mt-1 p-2.5 rounded-lg border border-slate-200 bg-slate-50/80 text-xs">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-1">معاينة مباشرة (بالعربي):</span>
+              <div
+                className="text-slate-800 leading-relaxed font-normal [&_b]:font-bold [&_strong]:font-bold"
+                dangerouslySetInnerHTML={{ __html: form.description_ar }}
+              />
+            </div>
+          )}
         </div>
 
         <textarea
