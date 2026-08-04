@@ -12,7 +12,7 @@ import {
   INITIAL_FORM,
 } from "./constants";
 import { normalizeList } from "./helpers";
-import { ProductFormCard } from "./ProductFormCard";
+import ProductFormCard from "./ProductFormCard";
 import ProductsTableCard from "./ProductsTableCard";
 
 function ProductsPanel({ products, mutationStatus }) {
