@@ -8,11 +8,13 @@ import LightbulbRoundedIcon from "@mui/icons-material/LightbulbRounded";
 import ArticleRoundedIcon from "@mui/icons-material/ArticleRounded";
 import SellRoundedIcon from "@mui/icons-material/SellRounded";
 import VideoLibraryRoundedIcon from "@mui/icons-material/VideoLibraryRounded";
+import RateReviewRoundedIcon from "@mui/icons-material/RateReviewRounded";
 
 const ICONS = {
   overview: DashboardRoundedIcon,
   orders: ReceiptLongRoundedIcon,
   products: Inventory2RoundedIcon,
+  textReviews: RateReviewRoundedIcon,
   videoReviews: VideoLibraryRoundedIcon,
   offers: LocalOfferRoundedIcon,
   coupons: ConfirmationNumberRoundedIcon,
@@ -24,6 +26,7 @@ export const DASHBOARD_SECTIONS = [
   { key: "overview", label: "Overview", path: "/dashboard/overview" },
   { key: "orders", label: "Orders", path: "/dashboard/orders" },
   { key: "products", label: "Products", path: "/dashboard/products" },
+  { key: "textReviews", label: "Text Reviews", path: "/dashboard/text-reviews" },
   { key: "videoReviews", label: "Customer Video Reviews", path: "/dashboard/video-reviews" },
   { key: "offers", label: "Offers", path: "/dashboard/offers" },
   { key: "coupons", label: "Coupons", path: "/dashboard/coupons" },

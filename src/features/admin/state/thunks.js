@@ -415,6 +415,26 @@ export const updateProductVideos = createAsyncThunk(
   }
 );
 
+export const deleteProductReview = createAsyncThunk(
+  "admin/deleteProductReview",
+  async ({ productId, reviewId }, { getState, rejectWithValue }) => {
+    try {
+      const token = getState().auth.token;
+      const response = await apiRequest(`/admin/products/${productId}/reviews/${reviewId}`, {
+        method: "DELETE",
+        token
+      });
+
+      return {
+        product: response.data,
+        message: response.message || "Product review deleted"
+      };
+    } catch (error) {
+      return rejectWithValue(getErrorMessage(error));
+    }
+  }
+);
+
 export const mutationThunks = [
   updateOrderStatus,
   updateOrderPaymentStatus,
@@ -432,5 +452,6 @@ export const mutationThunks = [
   createTip,
   updateTip,
   deleteTip,
-  updateSiteContent
+  updateSiteContent,
+  deleteProductReview
 ];

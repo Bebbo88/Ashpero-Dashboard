@@ -22,6 +22,7 @@ import {
   updateTip,
   deleteTip,
   updateSiteContent,
+  deleteProductReview,
   mutationThunks
 } from "./thunks";
 
@@ -235,6 +236,10 @@ const adminSlice = createSlice({
         state.lastMessage = action.payload.message;
       })
       .addCase(updateProductVideos.fulfilled, (state, action) => {
+        state.products = replaceById(state.products, action.payload.product);
+        state.lastMessage = action.payload.message;
+      })
+      .addCase(deleteProductReview.fulfilled, (state, action) => {
         state.products = replaceById(state.products, action.payload.product);
         state.lastMessage = action.payload.message;
       })

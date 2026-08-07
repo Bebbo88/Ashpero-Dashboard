@@ -11,6 +11,7 @@ import OffersPanel from "./components/dashboard/offers";
 import CouponsPanel from "./components/dashboard/coupons";
 import TipsPanel from "./components/dashboard/tips";
 import ContentPanel from "./components/dashboard/content";
+import ReviewsPanel from "./components/dashboard/reviews/ReviewsPanel";
 import { clearAuthError, loginAdmin, logoutAdmin } from "./features/auth/authSlice";
 import {
   clearAdminError,
@@ -150,6 +151,7 @@ function App() {
           }
         />
         <Route path="products" element={<ProductsPanel products={products} mutationStatus={mutationStatus} />} />
+        <Route path="text-reviews" element={<ReviewsPanel products={products} mutationStatus={mutationStatus} />} />
         <Route path="video-reviews" element={<VideoReviewsPanel products={products} mutationStatus={mutationStatus} />} />
         <Route path="offers" element={<OffersPanel offers={offers} products={products} mutationStatus={mutationStatus} />} />
         <Route path="coupons" element={<CouponsPanel coupons={coupons} mutationStatus={mutationStatus} />} />
