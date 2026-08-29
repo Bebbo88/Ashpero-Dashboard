@@ -1,13 +1,25 @@
 import { useMemo, useState } from "react";
 import { DataGrid } from "@mui/x-data-grid";
+import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
+import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
 import { useAppDispatch } from "../../../app/hooks";
 import {
   updateOrderPaymentStatus,
   updateOrderStatus,
+  updateOrderDetails,
 } from "../../../features/admin/adminSlice";
-import { formatCurrency, formatDateTime } from "../../../utils/formatters";
 import { getOrdersColumns } from "./columns";
 import { mapOrderRows, ORDER_STATUSES, PAYMENT_STATUSES } from "./helpers";
+import OrderDetailsDrawer from "./OrderDetailsDrawer";
+
+const TABS = [
+  { key: "all", label: "All Orders" },
+  { key: "new", label: "New" },
+  { key: "processing", label: "Processing" },
+  { key: "shipped", label: "Shipped" },
+  { key: "delivered", label: "Delivered" },
+  { key: "cancelled", label: "Cancelled" },
+];
 
 function OrdersPanel({
   orders,
@@ -19,10 +31,101 @@ function OrdersPanel({
 }) {
   const dispatch = useAppDispatch();
 
+  const [activeTab, setActiveTab] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
   const [draftStatus, setDraftStatus] = useState({});
   const [draftPaymentStatus, setDraftPaymentStatus] = useState({});
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
 
-  const rows = useMemo(() => mapOrderRows(orders), [orders]);
+  const rawRows = useMemo(() => mapOrderRows(orders), [orders]);
+
+  // Compute active order for drawer from orders array (instant fresh state) merged with populated details
+  const drawerOrder = useMemo(() => {
+    if (!selectedOrderId) return null;
+
+    const fromList = orders.find(
+      (o) => String(o._id || o.id) === String(selectedOrderId)
+    );
+
+    if (
+      selectedOrder &&
+      String(selectedOrder._id || selectedOrder.id) === String(selectedOrderId)
+    ) {
+      return {
+        ...selectedOrder,
+        orderStatus: fromList?.orderStatus || selectedOrder.orderStatus,
+        paymentStatus: fromList?.paymentStatus || selectedOrder.paymentStatus,
+        trackingNumber: fromList?.trackingNumber ?? selectedOrder.trackingNumber,
+        shippingCompany: fromList?.shippingCompany ?? selectedOrder.shippingCompany,
+        adminNote: fromList?.adminNote ?? selectedOrder.adminNote,
+      };
+    }
+
+    return fromList || selectedOrder;
+  }, [selectedOrderId, orders, selectedOrder]);
+
+  // Compute status counts for tabs
+  const tabCounts = useMemo(() => {
+    const counts = { all: rawRows.length, new: 0, processing: 0, shipped: 0, delivered: 0, cancelled: 0 };
+    for (const row of rawRows) {
+      if (counts[row.orderStatus] !== undefined) {
+        counts[row.orderStatus] += 1;
+      }
+    }
+    return counts;
+  }, [rawRows]);
+
+  // Filter rows by tab & search query
+  const filteredRows = useMemo(() => {
+    return rawRows.filter((row) => {
+      // 1. Tab filter
+      if (activeTab !== "all" && row.orderStatus !== activeTab) {
+        return false;
+      }
+
+      // 2. Search filter
+      if (searchTerm.trim()) {
+        const query = searchTerm.trim().toLowerCase();
+        const matchesRef = String(row.merchantOrderId || "").toLowerCase().includes(query);
+        const matchesName = String(row.customerName || "").toLowerCase().includes(query);
+        const matchesPhone = String(row.phone || "").toLowerCase().includes(query);
+        const matchesSecPhone = String(row.secondaryPhone || "").toLowerCase().includes(query);
+        const matchesGov = String(row.governorate || "").toLowerCase().includes(query);
+        const matchesCity = String(row.city || "").toLowerCase().includes(query);
+        const matchesTracking = String(row.trackingNumber || "").toLowerCase().includes(query);
+
+        return matchesRef || matchesName || matchesPhone || matchesSecPhone || matchesGov || matchesCity || matchesTracking;
+      }
+
+      return true;
+    });
+  }, [rawRows, activeTab, searchTerm]);
+
+  function handleOpenOrder(orderId) {
+    setSelectedOrderId(orderId);
+    onRequestOrderDetails(orderId);
+    setIsDrawerOpen(true);
+  }
+
+  function handleCloseDrawer() {
+    setIsDrawerOpen(false);
+    setSelectedOrderId(null);
+    onCloseOrderDetails();
+  }
+
+  async function handleSaveDetails(orderId, payload) {
+    try {
+      await dispatch(
+        updateOrderDetails({
+          orderId,
+          payload,
+        })
+      ).unwrap();
+    } catch (_error) {
+      // handled in slice
+    }
+  }
 
   const columns = useMemo(
     () =>
@@ -36,9 +139,9 @@ function OrdersPanel({
         onStatusSave: handleStatusSave,
         onPaymentStatusChange: handlePaymentStatusChange,
         onPaymentStatusSave: handlePaymentStatusSave,
-        onRequestOrderDetails,
+        onRequestOrderDetails: handleOpenOrder,
       }),
-    [mutationStatus, onRequestOrderDetails, draftStatus, draftPaymentStatus],
+    [mutationStatus, draftStatus, draftPaymentStatus]
   );
 
   function resolveStatus(row) {
@@ -75,7 +178,7 @@ function OrdersPanel({
         updateOrderStatus({
           orderId: id,
           orderStatus: nextStatus,
-        }),
+        })
       ).unwrap();
 
       setDraftStatus((previous) => {
@@ -88,11 +191,7 @@ function OrdersPanel({
     }
   }
 
-  async function handlePaymentStatusSave(id, currentStatus, paymentMethod) {
-    if (paymentMethod !== "cash_on_delivery") {
-      return;
-    }
-
+  async function handlePaymentStatusSave(id, currentStatus) {
     const nextStatus = draftPaymentStatus[id] || currentStatus;
 
     if (nextStatus === currentStatus) {
@@ -104,7 +203,7 @@ function OrdersPanel({
         updateOrderPaymentStatus({
           orderId: id,
           paymentStatus: nextStatus,
-        }),
+        })
       ).unwrap();
 
       setDraftPaymentStatus((previous) => {
@@ -117,46 +216,87 @@ function OrdersPanel({
     }
   }
 
-  function getStatusBadgeClass(status) {
-    switch (status) {
-      case "delivered":
-      case "paid":
-        return "bg-emerald-100 text-emerald-700";
-
-      case "pending":
-      case "processing":
-      case "shipped":
-        return "bg-amber-100 text-amber-700";
-
-      case "cancelled":
-      case "failed":
-        return "bg-red-100 text-red-700";
-
-      default:
-        return "bg-slate-100 text-slate-700";
-    }
-  }
-
   return (
     <section className="space-y-4">
-      <article className="panel p-4">
-        <div className="mb-3">
-          <h3 className="text-sm font-bold text-slate-900">Order Operations</h3>
+      {/* Quick Status Tabs */}
+      <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-3">
+        {TABS.map((tab) => {
+          const isActive = activeTab === tab.key;
+          const count = tabCounts[tab.key] || 0;
 
-          <p className="text-xs text-slate-500">
-            Update fulfillment state and inspect full order details.
-          </p>
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setActiveTab(tab.key)}
+              className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition ${
+                isActive
+                  ? "bg-slate-900 text-white shadow-md shadow-slate-900/15"
+                  : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:text-slate-900"
+              }`}
+            >
+              <span>{tab.label}</span>
+              <span
+                className={`rounded-full px-1.5 py-0.5 text-[10px] font-mono ${
+                  isActive
+                    ? "bg-white/20 text-white"
+                    : "bg-slate-100 text-slate-600"
+                }`}
+              >
+                {count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Main Table Card */}
+      <article className="panel p-4">
+        {/* Card Header & Search */}
+        <div className="mb-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-bold text-slate-900">
+              Orders Operations & Fulfillment
+            </h3>
+            <p className="text-xs text-slate-600">
+              Showing {filteredRows.length} of {rawRows.length} total orders.
+            </p>
+          </div>
+
+          <div className="relative min-w-[280px]">
+            <SearchRoundedIcon
+              fontSize="small"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600"
+            />
+            <input
+              type="text"
+              placeholder="Search by customer, phone, or ASHP-XXXX..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-xs text-slate-900 placeholder:text-slate-600 focus:border-brand-mint focus:bg-white focus:outline-none transition shadow-sm"
+            />
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => setSearchTerm("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-600 hover:text-slate-700"
+              >
+                ✕
+              </button>
+            )}
+          </div>
         </div>
 
-        <div className="h-[560px] w-full">
+        {/* DataGrid */}
+        <div className="h-[620px] w-full">
           <DataGrid
-            rows={rows}
+            rows={filteredRows}
             columns={columns}
-            pageSizeOptions={[10, 20, 50]}
+            pageSizeOptions={[10, 25, 50, 100]}
             initialState={{
               pagination: {
                 paginationModel: {
-                  pageSize: 10,
+                  pageSize: 25,
                   page: 0,
                 },
               },
@@ -164,198 +304,32 @@ function OrdersPanel({
             disableRowSelectionOnClick
             sx={{
               border: 0,
-
               "& .MuiDataGrid-columnHeaders": {
                 backgroundColor: "#f8fafc",
                 borderBottomColor: "#e2e8f0",
+                fontSize: "12px",
+                fontWeight: "bold",
+                color: "#1e293b",
               },
-
               "& .MuiDataGrid-cell": {
-                borderBottomColor: "#eef2ff",
+                borderBottomColor: "#f1f5f9",
+              },
+              "& .MuiDataGrid-row:hover": {
+                backgroundColor: "#f8fafc",
               },
             }}
           />
         </div>
       </article>
 
-      <article className="panel p-4">
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <div>
-            <h3 className="text-sm font-bold text-slate-900">
-              Selected Order Details
-            </h3>
-
-            <p className="text-xs text-slate-500">
-              Powered by `/admin/orders/:id` endpoint.
-            </p>
-          </div>
-
-          {selectedOrder ? (
-            <button
-              type="button"
-              onClick={onCloseOrderDetails}
-              className="rounded border border-slate-300 px-3 py-1 text-xs font-semibold text-slate-700"
-            >
-              Clear
-            </button>
-          ) : null}
-        </div>
-
-        {orderDetailsStatus === "loading" ? (
-          <p className="text-sm text-slate-600">Loading order details...</p>
-        ) : null}
-
-        {!selectedOrder && orderDetailsStatus !== "loading" ? (
-          <p className="text-sm text-slate-500">
-            Click "View" on any row to inspect complete order details.
-          </p>
-        ) : null}
-
-        {selectedOrder ? (
-          <div className="grid gap-3 md:grid-cols-2">
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                Customer
-              </p>
-
-              <p className="mt-2 text-sm font-semibold text-slate-900">
-                {selectedOrder.customerName}
-              </p>
-
-              <p className="text-xs text-slate-600">{selectedOrder.phone}</p>
-
-              {selectedOrder.secondaryPhone ? (
-                <p className="text-xs text-slate-600">
-                  Secondary: {selectedOrder.secondaryPhone}
-                </p>
-              ) : null}
-
-              <p className="mt-1 break-words text-xs text-slate-600">
-                {selectedOrder.address}
-              </p>
-
-              <p className="mt-1 break-all text-xs text-slate-600">
-                {selectedOrder.email || "No email"}
-              </p>
-            </div>
-
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                Order Info
-              </p>
-
-              <p className="mt-2 break-all text-xs text-slate-700">
-                Order Ref: {selectedOrder.merchantOrderId || selectedOrder._id}
-              </p>
-
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <span className="text-[11px] font-semibold text-slate-500">
-                  Order:
-                </span>
-
-                <span
-                  className={`rounded-full px-2 py-1 text-[11px] font-semibold ${getStatusBadgeClass(
-                    selectedOrder.orderStatus,
-                  )}`}
-                >
-                  {selectedOrder.orderStatus}
-                </span>
-
-                <span className="text-[11px] font-semibold text-slate-500">
-                  Payment:
-                </span>
-
-                <span
-                  className={`rounded-full px-2 py-1 text-[11px] font-semibold ${getStatusBadgeClass(
-                    selectedOrder.paymentStatus,
-                  )}`}
-                >
-                  {selectedOrder.paymentStatus}
-                </span>
-              </div>
-
-              <p className="mt-3 text-xs text-slate-700">
-                Method: {selectedOrder.paymentMethod}
-              </p>
-
-              <p className="text-xs text-slate-700">
-                Items: {selectedOrder.items?.length || 0}
-              </p>
-
-              <p className="text-xs text-slate-700">
-                Total:{" "}
-                {formatCurrency(
-                  selectedOrder.finalPrice || selectedOrder.totalPrice,
-                )}
-              </p>
-
-              <p className="text-xs text-slate-700">
-                Created: {formatDateTime(selectedOrder.createdAt)}
-              </p>
-
-              <p className="break-all text-xs text-slate-700">
-                Reference:{" "}
-                {selectedOrder.paymentReference
-                  ? `${selectedOrder.paymentReference.slice(0, 30)}...`
-                  : "N/A"}
-              </p>
-            </div>
-
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 md:col-span-2">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                Items
-              </p>
-
-              <div className="mt-3 flex flex-wrap gap-3">
-                {(selectedOrder.items || []).map((item) => (
-                  <div
-                    key={item._id || item.productId?._id || item.productId}
-                    className="min-w-[260px] flex-1 rounded-xl border border-slate-200 bg-white p-3"
-                  >
-                    <p className="font-semibold text-slate-800">
-                      {item.productName ||
-                        item.productId?.name_en ||
-                        item.productId?.name ||
-                        "Product"}
-                    </p>
-
-                    {item.selectedSize ? (
-                      <span className="mt-2 inline-flex rounded-full bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-700">
-                        Size: {item.selectedSize}
-                      </span>
-                    ) : null}
-
-                    <div className="mt-3 space-y-1 text-xs text-slate-600">
-                      <p>
-                        Quantity:{" "}
-                        <span className="font-semibold">{item.quantity}</span>
-                      </p>
-
-                      <p>
-                        Unit Price:{" "}
-                        <span className="font-semibold">
-                          {formatCurrency(
-                            item.unitPrice || item.priceAtPurchase,
-                          )}
-                        </span>
-                      </p>
-
-                      <p>
-                        Final Total:{" "}
-                        <span className="font-semibold text-slate-800">
-                          {formatCurrency(
-                            (item.priceAtPurchase || 0) * (item.quantity || 0),
-                          )}
-                        </span>
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        ) : null}
-      </article>
+      {/* Slide-over Drawer */}
+      <OrderDetailsDrawer
+        order={drawerOrder}
+        isOpen={isDrawerOpen && Boolean(drawerOrder)}
+        onClose={handleCloseDrawer}
+        onSaveDetails={handleSaveDetails}
+        mutationStatus={mutationStatus}
+      />
     </section>
   );
 }

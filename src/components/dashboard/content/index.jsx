@@ -12,6 +12,8 @@ function ContentPanel({ content, mutationStatus }) {
   const [spotlightImageFiles, setSpotlightImageFiles] = useState([]);
   const [popupImageFile, setPopupImageFile] = useState(null);
   const [popupExpiresAt, setPopupExpiresAt] = useState("");
+  const [productsBannerImageFile, setProductsBannerImageFile] = useState(null);
+  const [offersBannerImageFile, setOffersBannerImageFile] = useState(null);
   const [countdownEnabled, setCountdownEnabled] = useState(false);
   const [countdownTargetDate, setCountdownTargetDate] = useState("");
   const [countdownTitleEn, setCountdownTitleEn] = useState("");
@@ -25,6 +27,8 @@ function ContentPanel({ content, mutationStatus }) {
     setSpotlightImageFiles([]);
     setPopupImageFile(null);
     setPopupExpiresAt(toDateTimeInputValue(content.popupExpiresAt));
+    setProductsBannerImageFile(null);
+    setOffersBannerImageFile(null);
     setCountdownEnabled(Boolean(content.countdownEnabled));
     setCountdownTargetDate(toDateTimeInputValue(content.countdownTargetDate));
     setCountdownTitleEn(content.countdownTitle_en || "");
@@ -42,6 +46,8 @@ function ContentPanel({ content, mutationStatus }) {
       spotlightImageFiles,
       popupImageFile,
       popupExpiresAt,
+      productsBannerImageFile,
+      offersBannerImageFile,
       countdownEnabled,
       countdownTargetDate,
       countdownTitleEn,
@@ -54,6 +60,8 @@ function ContentPanel({ content, mutationStatus }) {
       setBannerFiles([]);
       setSpotlightImageFiles([]);
       setPopupImageFile(null);
+      setProductsBannerImageFile(null);
+      setOffersBannerImageFile(null);
     } catch (_error) {
       // Error state is surfaced through admin slice.
     }
@@ -183,6 +191,40 @@ function ContentPanel({ content, mutationStatus }) {
           </label>
 
           <label className="text-sm font-semibold text-slate-700">
+            Products Page Banner Image (صورة بانر صفحة المنتجات)
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(event) => setProductsBannerImageFile(event.target.files?.[0] || null)}
+              className="file-upload-input mt-1.5"
+            />
+            <span className="mt-1 block text-xs text-slate-500">
+              {productsBannerImageFile
+                ? `Selected: ${productsBannerImageFile.name}`
+                : content.productsBannerImage
+                  ? `Current image: ${content.productsBannerImage}`
+                  : "Default: /assets/all_productss.jpg"}
+            </span>
+          </label>
+
+          <label className="text-sm font-semibold text-slate-700">
+            Offers & Bundles Page Banner Image (صورة بانر صفحة العروض والباندلز)
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(event) => setOffersBannerImageFile(event.target.files?.[0] || null)}
+              className="file-upload-input mt-1.5"
+            />
+            <span className="mt-1 block text-xs text-slate-500">
+              {offersBannerImageFile
+                ? `Selected: ${offersBannerImageFile.name}`
+                : content.offersBannerImage
+                  ? `Current image: ${content.offersBannerImage}`
+                  : "Optional / Falls back to Spotlight/Banners"}
+            </span>
+          </label>
+
+          <label className="text-sm font-semibold text-slate-700">
             Popup Offer Image
             <input
               type="file"
@@ -222,7 +264,7 @@ function ContentPanel({ content, mutationStatus }) {
 
       <article className="panel p-4">
         <h3 className="text-sm font-bold text-slate-900">Current Content Snapshot</h3>
-        <div className="mt-3 grid gap-3 lg:grid-cols-6">
+        <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
               Top Banner Text
@@ -247,6 +289,28 @@ function ContentPanel({ content, mutationStatus }) {
                   <p className="truncate">Title: {content.countdownTitle_ar || content.countdownTitle_en || "-"}</p>
                 </>
               )}
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+              Products Page Banner
+            </p>
+            <div className="mt-2 space-y-1 text-xs text-slate-700">
+              <p className="truncate" title={content.productsBannerImage || "Default (/assets/all_productss.jpg)"}>
+                {content.productsBannerImage ? content.productsBannerImage : "Default (/assets/all_productss.jpg)"}
+              </p>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+              Offers Page Banner
+            </p>
+            <div className="mt-2 space-y-1 text-xs text-slate-700">
+              <p className="truncate" title={content.offersBannerImage || "Spotlight / Banners fallback"}>
+                {content.offersBannerImage ? content.offersBannerImage : "Spotlight / Banners fallback"}
+              </p>
             </div>
           </div>
 

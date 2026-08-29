@@ -16,7 +16,7 @@ function DashboardLayout({
   return (
     <main className="mx-auto w-full max-w-[1650px] px-3 py-4 md:px-6 md:py-6">
       <div className="grid gap-4 md:grid-cols-[18rem_1fr] md:items-start">
-        <Sidebar />
+        <Sidebar admin={admin} />
 
         <section className="min-w-0">
           <TopBar

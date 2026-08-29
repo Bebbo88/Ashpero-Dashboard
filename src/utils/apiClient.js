@@ -1,6 +1,5 @@
-﻿const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
 const TOKEN_KEY = "ashpero_admin_token";
-const REFRESH_TOKEN_KEY = "ashpero_admin_refresh_token";
 const ADMIN_KEY = "ashpero_admin_profile";
 
 function extractPayloadMessage(payload) {
@@ -47,7 +46,7 @@ async function parseResponse(response) {
   }
 }
 
-function getStoredToken() {
+export function getStoredToken() {
   try {
     return localStorage.getItem(TOKEN_KEY) || "";
   } catch (_error) {
@@ -55,15 +54,7 @@ function getStoredToken() {
   }
 }
 
-function getStoredRefreshToken() {
-  try {
-    return localStorage.getItem(REFRESH_TOKEN_KEY) || "";
-  } catch (_error) {
-    return "";
-  }
-}
-
-function storeAuthPayload(payload = {}) {
+export function storeAuthPayload(payload = {}) {
   if (!payload || typeof payload !== "object") {
     return;
   }
@@ -72,38 +63,31 @@ function storeAuthPayload(payload = {}) {
     localStorage.setItem(TOKEN_KEY, payload.token);
   }
 
-  if (payload.refreshToken) {
-    localStorage.setItem(REFRESH_TOKEN_KEY, payload.refreshToken);
-  }
-
   if (payload.admin) {
     localStorage.setItem(ADMIN_KEY, JSON.stringify(payload.admin));
   }
 }
 
-function clearStoredAuth() {
+export function clearStoredAuth() {
   localStorage.removeItem(TOKEN_KEY);
-  localStorage.removeItem(REFRESH_TOKEN_KEY);
   localStorage.removeItem(ADMIN_KEY);
 
   window.dispatchEvent(new CustomEvent("ashpero:auth-expired"));
 }
 
-async function refreshAccessToken(language = "en") {
-  const refreshToken = getStoredRefreshToken();
+// Mutex to prevent multiple concurrent refresh calls (Race condition prevention)
+let refreshPromise = null;
 
-  if (!refreshToken) {
-    throw new Error("Refresh token is required");
-  }
-
+async function executeTokenRefresh(language = "en") {
   const response = await fetch(`${API_BASE_URL}/admin/refresh`, {
     method: "POST",
+    credentials: "include",
     headers: {
       Accept: "application/json",
       "Content-Type": "application/json",
       "x-lang": language
     },
-    body: JSON.stringify({ refreshToken })
+    body: JSON.stringify({})
   });
 
   const payload = await parseResponse(response);
@@ -116,8 +100,16 @@ async function refreshAccessToken(language = "en") {
   }
 
   storeAuthPayload(payload.data || {});
-
   return payload.data || {};
+}
+
+export async function refreshAccessToken(language = "en") {
+  if (!refreshPromise) {
+    refreshPromise = executeTokenRefresh(language).finally(() => {
+      refreshPromise = null;
+    });
+  }
+  return refreshPromise;
 }
 
 export async function apiRequest(path, options = {}) {
@@ -150,6 +142,7 @@ export async function apiRequest(path, options = {}) {
   try {
     response = await fetch(`${API_BASE_URL}${path}`, {
       method,
+      credentials: "include",
       headers,
       body: body
         ? isFormData
@@ -174,6 +167,7 @@ export async function apiRequest(path, options = {}) {
 
       response = await fetch(`${API_BASE_URL}${path}`, {
         method,
+        credentials: "include",
         headers: retryHeaders,
         body: body
           ? isFormData

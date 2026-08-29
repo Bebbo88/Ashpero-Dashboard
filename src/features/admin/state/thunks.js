@@ -90,18 +90,38 @@ export const updateOrderPaymentStatus = createAsyncThunk(
   }
 );
 
+export const updateOrderDetails = createAsyncThunk(
+  "admin/updateOrderDetails",
+  async ({ orderId, payload }, { getState, rejectWithValue }) => {
+    try {
+      const token = getState().auth.token;
+      const response = await apiRequest(`/admin/orders/${orderId}`, {
+        method: "PATCH",
+        token,
+        body: payload
+      });
+
+      return {
+        order: response.data,
+        message: response.message || "Order updated successfully"
+      };
+    } catch (error) {
+      return rejectWithValue(getErrorMessage(error));
+    }
+  }
+);
+
 export const fetchOrderDetails = createAsyncThunk(
   "admin/fetchOrderDetails",
-  async (orderId, { dispatch, rejectWithValue }) => {
+  async (orderId, { getState, rejectWithValue }) => {
     try {
       const normalizedOrderId = String(orderId || "").trim();
-      const data = await dispatch(
-        adminApi.endpoints.getOrderDetails.initiate(normalizedOrderId, {
-          subscribe: false
-        })
-      ).unwrap();
+      const token = getState().auth.token;
+      const response = await apiRequest(`/admin/orders/${normalizedOrderId}`, {
+        token
+      });
 
-      return data;
+      return response.data || null;
     } catch (error) {
       return rejectWithValue(getErrorMessage(error));
     }
@@ -435,9 +455,31 @@ export const deleteProductReview = createAsyncThunk(
   }
 );
 
+export const updateShippingSettings = createAsyncThunk(
+  "admin/updateShippingSettings",
+  async (body, { getState, rejectWithValue }) => {
+    try {
+      const token = getState().auth.token;
+      const response = await apiRequest("/admin/shipping", {
+        method: "PUT",
+        token,
+        body
+      });
+
+      return {
+        shippingSettings: response.data,
+        message: response.message || "Shipping settings updated"
+      };
+    } catch (error) {
+      return rejectWithValue(getErrorMessage(error));
+    }
+  }
+);
+
 export const mutationThunks = [
   updateOrderStatus,
   updateOrderPaymentStatus,
+  updateOrderDetails,
   createProduct,
   updateProduct,
   deleteProduct,
@@ -453,5 +495,6 @@ export const mutationThunks = [
   updateTip,
   deleteTip,
   updateSiteContent,
-  deleteProductReview
+  deleteProductReview,
+  updateShippingSettings
 ];

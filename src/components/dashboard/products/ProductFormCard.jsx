@@ -555,6 +555,100 @@ export function ProductFormCard({
 
 
 
+        {/* Custom Dynamic Badge Section */}
+        <div className="md:col-span-2 p-3.5 rounded-xl border border-amber-200 bg-amber-50/60">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-500 text-white text-xs font-bold">
+              ★
+            </span>
+            <h4 className="text-xs font-bold text-amber-900 uppercase tracking-wider">
+              شارة المنتج المميزة (Custom Product Badge - Optional)
+            </h4>
+          </div>
+          <p className="text-[11px] text-amber-700 mb-3">
+            تظهر هذه الشارة داخل كارت المزايا بصفحة المنتج في المتجر (مثال: "مرخص ومُعتمد" أو "موصى به طبياً"). اتركها فارغة إذا لم ترغب في إظهار شارة.
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label className="text-[11px] font-semibold text-slate-700 block mb-1">
+                نص الشارة (بالعربي)
+              </label>
+              <input
+                type="text"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 focus:border-amber-500 focus:outline-none"
+                name="badgeText_ar"
+                placeholder="مثال: مرخص ومُعتمد من هيئة الدواء"
+                value={form.badgeText_ar || ""}
+                onChange={onFieldChange}
+              />
+            </div>
+            <div>
+              <label className="text-[11px] font-semibold text-slate-700 block mb-1">
+                Badge Text (English)
+              </label>
+              <input
+                type="text"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 focus:border-amber-500 focus:outline-none"
+                name="badgeText_en"
+                placeholder="e.g. EDA Approved & Certified"
+                value={form.badgeText_en || ""}
+                onChange={onFieldChange}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Inventory Stock Status Section */}
+        <div className="md:col-span-2 flex items-center justify-between p-3.5 rounded-xl border border-slate-200 bg-slate-50">
+          <div>
+            <h4 className="text-xs font-bold text-slate-800">
+              حالة التوفر في المخزن (Inventory Stock Status)
+            </h4>
+            <p className="text-[11px] text-slate-500 mt-0.5">
+              تحديد ما إذا كان المنتج متاحاً للشراء في المتجر ("متاح في المخزن") أو يظهر كـ "غير متاح"
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <span
+              className={`text-xs font-bold px-2.5 py-1 rounded-full ${
+                form.inStock !== false
+                  ? "bg-emerald-100 text-emerald-800"
+                  : "bg-red-100 text-red-800"
+              }`}
+            >
+              {form.inStock !== false ? "متاح في المخزن (In Stock)" : "غير متاح (Out of Stock)"}
+            </span>
+            <label className="relative inline-flex items-center cursor-pointer select-none">
+              <input
+                type="checkbox"
+                name="inStock"
+                checked={form.inStock !== false}
+                onChange={(e) =>
+                  onFieldChange({
+                    target: {
+                      name: "inStock",
+                      type: "checkbox",
+                      checked: e.target.checked,
+                    },
+                  })
+                }
+                className="sr-only"
+              />
+              <div
+                className={`w-12 h-6 rounded-full transition-colors relative duration-200 ${
+                  form.inStock !== false ? "bg-emerald-600" : "bg-slate-300"
+                }`}
+              >
+                <div
+                  className={`absolute top-[2px] left-[2px] bg-white w-5 h-5 rounded-full transition-transform duration-200 shadow-sm ${
+                    form.inStock !== false ? "translate-x-[24px]" : "translate-x-0"
+                  }`}
+                />
+              </div>
+            </label>
+          </div>
+        </div>
+
         <label className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700 md:col-span-2">
           <input
             type="checkbox"

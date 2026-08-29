@@ -30,10 +30,17 @@ const initialState = {
     spotlightImages: [],
     popupImage: "",
     popupExpiresAt: null,
+    productsBannerImage: "",
+    offersBannerImage: "",
     countdownEnabled: false,
     countdownTargetDate: null,
     countdownTitle_en: "",
     countdownTitle_ar: ""
+  },
+  shippingSettings: {
+    globalFreeShipping: false,
+    defaultShippingCost: 50,
+    governorates: []
   }
 };
 

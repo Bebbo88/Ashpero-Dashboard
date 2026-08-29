@@ -266,6 +266,9 @@ function ProductsPanel({ products, mutationStatus }) {
     formData.append("isActive", String(form.isActive));
     formData.append("isBestSeller", String(form.isBestSeller));
     formData.append("isBundle", String(form.isBundle || false));
+    formData.append("badgeText_en", form.badgeText_en ? form.badgeText_en.trim() : "");
+    formData.append("badgeText_ar", form.badgeText_ar ? form.badgeText_ar.trim() : "");
+    formData.append("inStock", String(form.inStock !== false));
     formData.append("bundleIncludes", JSON.stringify(form.bundleIncludes || []));
     if (!isBundle && form.oldPrice !== undefined && form.oldPrice !== "") {
       formData.append("oldPrice", String(form.oldPrice));
@@ -370,6 +373,9 @@ function ProductsPanel({ products, mutationStatus }) {
       isBestSeller:
         typeof row.isBestSeller === "boolean" ? row.isBestSeller : false,
       isBundle: typeof row.isBundle === "boolean" ? row.isBundle : false,
+      badgeText_en: row.badgeText_en || row.badgeText || "",
+      badgeText_ar: row.badgeText_ar || "",
+      inStock: typeof row.inStock === "boolean" ? row.inStock : true,
       bundleIncludes: Array.isArray(row.bundleIncludes) ? row.bundleIncludes : [],
       oldPrice: row.oldPrice !== undefined ? String(row.oldPrice) : "",
       price: (row.isBundle && Array.isArray(row.variants) && row.variants[0])

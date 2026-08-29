@@ -10,6 +10,8 @@ const EMPTY_CONTENT = {
   spotlightImages: [],
   popupImage: "",
   popupExpiresAt: null,
+  productsBannerImage: "",
+  offersBannerImage: "",
   countdownEnabled: false,
   countdownTargetDate: null,
   countdownTitle_en: "",
@@ -24,7 +26,31 @@ export const adminApi = createApi({
     getAdminSnapshot: builder.query({
       queryFn: async (_arg, { getState }) => {
         try {
-          const token = getState().auth.token;
+          const state = getState();
+          const token = state.auth.token;
+          const adminRole = state.auth.admin?.role;
+
+          if (adminRole === "order_manager") {
+            const ordersResponse = await apiRequest("/admin/orders", { token });
+            return {
+              data: {
+                snapshotToken: token,
+                dashboard: {},
+                inventory: [],
+                orders: ordersResponse.data || [],
+                offers: [],
+                coupons: [],
+                tips: [],
+                products: [],
+                content: EMPTY_CONTENT,
+                shippingSettings: {
+                  globalFreeShipping: false,
+                  defaultShippingCost: 50,
+                  governorates: []
+                }
+              }
+            };
+          }
 
           const [
             dashboardResponse,
@@ -34,7 +60,8 @@ export const adminApi = createApi({
             couponsResponse,
             tipsResponse,
             productsResponse,
-            contentResponse
+            contentResponse,
+            shippingResponse
           ] = await Promise.all([
             apiRequest("/admin/dashboard", { token }),
             apiRequest("/admin/inventory", { token }),
@@ -43,7 +70,8 @@ export const adminApi = createApi({
             apiRequest("/admin/coupons", { token }),
             apiRequest("/admin/tips", { token }),
             apiRequest("/products", { token }),
-            apiRequest("/content", { token })
+            apiRequest("/content", { token }),
+            apiRequest("/admin/shipping", { token })
           ]);
 
           return {
@@ -56,7 +84,12 @@ export const adminApi = createApi({
               coupons: couponsResponse.data || [],
               tips: tipsResponse.data || [],
               products: productsResponse.data || [],
-              content: contentResponse.data || EMPTY_CONTENT
+              content: contentResponse.data || EMPTY_CONTENT,
+              shippingSettings: shippingResponse.data || {
+                globalFreeShipping: false,
+                defaultShippingCost: 50,
+                governorates: []
+              }
             }
           };
         } catch (error) {

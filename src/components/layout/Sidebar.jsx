@@ -9,11 +9,13 @@ import ArticleRoundedIcon from "@mui/icons-material/ArticleRounded";
 import SellRoundedIcon from "@mui/icons-material/SellRounded";
 import VideoLibraryRoundedIcon from "@mui/icons-material/VideoLibraryRounded";
 import RateReviewRoundedIcon from "@mui/icons-material/RateReviewRounded";
+import LocalShippingRoundedIcon from "@mui/icons-material/LocalShippingRounded";
 
 const ICONS = {
   overview: DashboardRoundedIcon,
   orders: ReceiptLongRoundedIcon,
   products: Inventory2RoundedIcon,
+  shipping: LocalShippingRoundedIcon,
   textReviews: RateReviewRoundedIcon,
   videoReviews: VideoLibraryRoundedIcon,
   offers: LocalOfferRoundedIcon,
@@ -23,18 +25,26 @@ const ICONS = {
 };
 
 export const DASHBOARD_SECTIONS = [
-  { key: "overview", label: "Overview", path: "/dashboard/overview" },
-  { key: "orders", label: "Orders", path: "/dashboard/orders" },
-  { key: "products", label: "Products", path: "/dashboard/products" },
-  { key: "textReviews", label: "Text Reviews", path: "/dashboard/text-reviews" },
-  { key: "videoReviews", label: "Customer Video Reviews", path: "/dashboard/video-reviews" },
-  { key: "offers", label: "Offers", path: "/dashboard/offers" },
-  { key: "coupons", label: "Coupons", path: "/dashboard/coupons" },
-  { key: "tips", label: "Tips", path: "/dashboard/tips" },
-  { key: "content", label: "Site Content", path: "/dashboard/content" },
+  { key: "overview", label: "Overview", path: "/dashboard/overview", roles: ["super_admin"] },
+  { key: "orders", label: "Orders", path: "/dashboard/orders", roles: ["super_admin", "order_manager"] },
+  { key: "products", label: "Products", path: "/dashboard/products", roles: ["super_admin"] },
+  { key: "shipping", label: "Shipping Settings", path: "/dashboard/shipping", roles: ["super_admin"] },
+  { key: "textReviews", label: "Text Reviews", path: "/dashboard/text-reviews", roles: ["super_admin"] },
+  { key: "videoReviews", label: "Customer Video Reviews", path: "/dashboard/video-reviews", roles: ["super_admin"] },
+  { key: "offers", label: "Offers", path: "/dashboard/offers", roles: ["super_admin"] },
+  { key: "coupons", label: "Coupons", path: "/dashboard/coupons", roles: ["super_admin"] },
+  { key: "tips", label: "Tips", path: "/dashboard/tips", roles: ["super_admin"] },
+  { key: "content", label: "Site Content", path: "/dashboard/content", roles: ["super_admin"] },
 ];
 
-function Sidebar() {
+function Sidebar({ admin }) {
+  const role = admin?.role || "super_admin";
+  const isOrderManager = role === "order_manager";
+
+  const visibleSections = DASHBOARD_SECTIONS.filter((section) =>
+    section.roles.includes(role)
+  );
+
   return (
     <aside className="panel w-full p-4 md:w-72 md:min-h-[calc(100vh-3rem)] md:sticky md:top-6">
       <div className="mb-6 flex items-center gap-3 rounded-xl border border-teal-100 bg-teal-50 px-3 py-3">
@@ -46,13 +56,13 @@ function Sidebar() {
             Ashperoo
           </p>
           <h1 className="text-base font-bold text-slate-900">
-            Admin Control Center
+            {isOrderManager ? "Orders Manager" : "Admin Control"}
           </h1>
         </div>
       </div>
 
       <nav className="space-y-2">
-        {DASHBOARD_SECTIONS.map((section) => {
+        {visibleSections.map((section) => {
           const Icon = ICONS[section.key];
 
           return (
@@ -76,13 +86,15 @@ function Sidebar() {
         })}
       </nav>
 
-      <div className="mt-6 rounded-xl border border-orange-200 bg-orange-50 p-3 text-xs text-orange-900">
-        <p className="font-semibold">Analytics Guidance</p>
-        <p className="mt-1 leading-relaxed">
-          Focus on delivery rate, low-stock risk, and promotion ROI to keep
-          operations and growth in balance.
-        </p>
-      </div>
+      {!isOrderManager && (
+        <div className="mt-6 rounded-xl border border-orange-200 bg-orange-50 p-3 text-xs text-orange-900">
+          <p className="font-semibold">Analytics Guidance</p>
+          <p className="mt-1 leading-relaxed">
+            Focus on delivery rate, low-stock risk, and promotion ROI to keep
+            operations and growth in balance.
+          </p>
+        </div>
+      )}
     </aside>
   );
 }

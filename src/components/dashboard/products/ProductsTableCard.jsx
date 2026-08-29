@@ -157,6 +157,39 @@ function ProductsTableCard({
             },
 
             {
+              field: "inStock",
+              headerName: "Stock Status",
+              minWidth: 120,
+              flex: 0.8,
+              renderCell: (params) => (
+                <span
+                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${
+                    params.row.inStock !== false
+                      ? "bg-emerald-100 text-emerald-800"
+                      : "bg-red-100 text-red-800"
+                  }`}
+                >
+                  {params.row.inStock !== false ? "In Stock" : "Out of Stock"}
+                </span>
+              ),
+            },
+            {
+              field: "badgeText",
+              headerName: "Badge",
+              minWidth: 130,
+              flex: 0.9,
+              renderCell: (params) => {
+                const text = params.row.badgeText_ar || params.row.badgeText_en || params.row.badgeText;
+                return text ? (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 text-xs font-semibold truncate max-w-[120px]">
+                    ★ {text}
+                  </span>
+                ) : (
+                  <span className="text-slate-400 text-xs">-</span>
+                );
+              },
+            },
+            {
               field: "isActive",
               headerName: "Active",
               minWidth: 80,

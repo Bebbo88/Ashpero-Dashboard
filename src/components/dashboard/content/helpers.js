@@ -6,6 +6,8 @@ export function buildContentFormData({
   spotlightImageFiles,
   popupImageFile,
   popupExpiresAt,
+  productsBannerImageFile,
+  offersBannerImageFile,
   countdownEnabled,
   countdownTargetDate,
   countdownTitleEn,
@@ -30,6 +32,14 @@ export function buildContentFormData({
 
   if (popupImageFile) {
     formData.append("popupImage", popupImageFile);
+  }
+
+  if (productsBannerImageFile) {
+    formData.append("productsBannerImage", productsBannerImageFile);
+  }
+
+  if (offersBannerImageFile) {
+    formData.append("offersBannerImage", offersBannerImageFile);
   }
 
   formData.append("popupExpiresAt", toIsoDateTimeFromInput(popupExpiresAt));

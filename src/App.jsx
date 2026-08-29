@@ -12,7 +12,8 @@ import CouponsPanel from "./components/dashboard/coupons";
 import TipsPanel from "./components/dashboard/tips";
 import ContentPanel from "./components/dashboard/content";
 import ReviewsPanel from "./components/dashboard/reviews/ReviewsPanel";
-import { clearAuthError, loginAdmin, logoutAdmin } from "./features/auth/authSlice";
+import ShippingPanel from "./components/dashboard/shipping/ShippingPanel";
+import { clearAuthError, loginAdmin, logoutAdmin, refreshAdminToken } from "./features/auth/authSlice";
 import {
   clearAdminError,
   fetchAdminSnapshot,
@@ -28,6 +29,7 @@ function App() {
   const token = useAppSelector((state) => state.auth.token);
   const authStatus = useAppSelector((state) => state.auth.status);
   const authError = useAppSelector((state) => state.auth.error);
+  const admin = useAppSelector((state) => state.auth.admin);
 
   const {
     dashboard,
@@ -40,14 +42,25 @@ function App() {
     tips,
     products,
     content,
+    shippingSettings,
     snapshotStatus,
     mutationStatus,
     error,
     lastMessage
   } = useAppSelector((state) => state.admin);
-  const admin = useAppSelector((state) => state.auth.admin);
 
   const [lastUpdatedAt, setLastUpdatedAt] = useState("");
+
+  const role = admin?.role || "super_admin";
+  const isOrderManager = role === "order_manager";
+  const defaultDashboardPath = isOrderManager ? "/dashboard/orders" : "/dashboard/overview";
+
+  // Silent refresh on mount if token is absent
+  useEffect(() => {
+    if (!token && authStatus === "idle") {
+      dispatch(refreshAdminToken());
+    }
+  }, [dispatch, token, authStatus]);
 
   useEffect(() => {
     if (!token) {
@@ -118,7 +131,7 @@ function App() {
 
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/dashboard/overview" replace />} />
+      <Route path="/" element={<Navigate to={defaultDashboardPath} replace />} />
       <Route
         path="/dashboard"
         element={
@@ -135,8 +148,9 @@ function App() {
           />
         }
       >
-        <Route index element={<Navigate to="overview" replace />} />
-        <Route path="overview" element={<OverviewPanel dashboard={dashboard} orders={orders} inventory={inventory} />} />
+        <Route index element={<Navigate to={isOrderManager ? "orders" : "overview"} replace />} />
+        
+        {/* Orders panel accessible by all authorized roles */}
         <Route
           path="orders"
           element={
@@ -150,15 +164,25 @@ function App() {
             />
           }
         />
-        <Route path="products" element={<ProductsPanel products={products} mutationStatus={mutationStatus} />} />
-        <Route path="text-reviews" element={<ReviewsPanel products={products} mutationStatus={mutationStatus} />} />
-        <Route path="video-reviews" element={<VideoReviewsPanel products={products} mutationStatus={mutationStatus} />} />
-        <Route path="offers" element={<OffersPanel offers={offers} products={products} mutationStatus={mutationStatus} />} />
-        <Route path="coupons" element={<CouponsPanel coupons={coupons} mutationStatus={mutationStatus} />} />
-        <Route path="tips" element={<TipsPanel tips={tips} mutationStatus={mutationStatus} />} />
-        <Route path="content" element={<ContentPanel content={content} mutationStatus={mutationStatus} />} />
+
+        {/* Super Admin exclusive routes */}
+        {!isOrderManager && (
+          <>
+            <Route path="overview" element={<OverviewPanel dashboard={dashboard} orders={orders} inventory={inventory} />} />
+            <Route path="products" element={<ProductsPanel products={products} mutationStatus={mutationStatus} />} />
+            <Route path="shipping" element={<ShippingPanel shippingSettings={shippingSettings} mutationStatus={mutationStatus} />} />
+            <Route path="text-reviews" element={<ReviewsPanel products={products} mutationStatus={mutationStatus} />} />
+            <Route path="video-reviews" element={<VideoReviewsPanel products={products} mutationStatus={mutationStatus} />} />
+            <Route path="offers" element={<OffersPanel offers={offers} products={products} mutationStatus={mutationStatus} />} />
+            <Route path="coupons" element={<CouponsPanel coupons={coupons} mutationStatus={mutationStatus} />} />
+            <Route path="tips" element={<TipsPanel tips={tips} mutationStatus={mutationStatus} />} />
+            <Route path="content" element={<ContentPanel content={content} mutationStatus={mutationStatus} />} />
+          </>
+        )}
+
+        <Route path="*" element={<Navigate to={defaultDashboardPath} replace />} />
       </Route>
-      <Route path="*" element={<Navigate to="/dashboard/overview" replace />} />
+      <Route path="*" element={<Navigate to={defaultDashboardPath} replace />} />
     </Routes>
   );
 }

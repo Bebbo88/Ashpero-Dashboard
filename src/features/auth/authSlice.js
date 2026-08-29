@@ -1,8 +1,7 @@
-﻿import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { apiRequest } from "../../utils/apiClient";
 
 const TOKEN_KEY = "ashpero_admin_token";
-const REFRESH_TOKEN_KEY = "ashpero_admin_refresh_token";
 const ADMIN_KEY = "ashpero_admin_profile";
 
 function readAdminProfile() {
@@ -49,20 +48,10 @@ export const loginAdmin = createAsyncThunk(
 
 export const refreshAdminToken = createAsyncThunk(
   "auth/refreshAdminToken",
-  async (providedRefreshToken, { getState, rejectWithValue }) => {
+  async (_arg, { rejectWithValue }) => {
     try {
-      const fallbackRefreshToken = localStorage.getItem(REFRESH_TOKEN_KEY) || "";
-      const refreshToken = String(
-        providedRefreshToken || getState().auth.refreshToken || fallbackRefreshToken
-      ).trim();
-
-      if (!refreshToken) {
-        throw new Error("Refresh token is required");
-      }
-
       const payload = await apiRequest("/admin/refresh", {
         method: "POST",
-        body: { refreshToken },
         language: "en"
       });
 
@@ -75,7 +64,6 @@ export const refreshAdminToken = createAsyncThunk(
 
 const initialState = {
   token: localStorage.getItem(TOKEN_KEY) || "",
-  refreshToken: localStorage.getItem(REFRESH_TOKEN_KEY) || "",
   admin: readAdminProfile(),
   status: "idle",
   error: ""
@@ -87,13 +75,15 @@ const authSlice = createSlice({
   reducers: {
     logoutAdmin(state) {
       state.token = "";
-      state.refreshToken = "";
       state.admin = null;
       state.status = "idle";
       state.error = "";
       localStorage.removeItem(TOKEN_KEY);
-      localStorage.removeItem(REFRESH_TOKEN_KEY);
       localStorage.removeItem(ADMIN_KEY);
+      localStorage.removeItem("ashpero_admin_refresh_token");
+
+      // Notify backend to clear HttpOnly cookie and revoke session
+      apiRequest("/admin/logout", { method: "POST" }).catch(() => {});
     },
     clearAuthError(state) {
       state.error = "";
@@ -108,13 +98,12 @@ const authSlice = createSlice({
       .addCase(loginAdmin.fulfilled, (state, action) => {
         state.status = "succeeded";
         state.token = action.payload.token;
-        state.refreshToken = action.payload.refreshToken;
         state.admin = action.payload.admin;
         state.error = "";
 
         localStorage.setItem(TOKEN_KEY, action.payload.token);
-        localStorage.setItem(REFRESH_TOKEN_KEY, action.payload.refreshToken || "");
         localStorage.setItem(ADMIN_KEY, JSON.stringify(action.payload.admin));
+        localStorage.removeItem("ashpero_admin_refresh_token");
       })
       .addCase(loginAdmin.rejected, (state, action) => {
         state.status = "failed";
@@ -122,12 +111,9 @@ const authSlice = createSlice({
       })
       .addCase(refreshAdminToken.fulfilled, (state, action) => {
         state.token = action.payload.token;
-        state.refreshToken = action.payload.refreshToken;
         state.admin = action.payload.admin || state.admin;
 
         localStorage.setItem(TOKEN_KEY, action.payload.token);
-        localStorage.setItem(REFRESH_TOKEN_KEY, action.payload.refreshToken || "");
-
         if (action.payload.admin) {
           localStorage.setItem(ADMIN_KEY, JSON.stringify(action.payload.admin));
         }
