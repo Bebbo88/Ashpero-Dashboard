@@ -1,16 +1,19 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
-import { useAppDispatch } from "../../../app/hooks";
+import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import {
+  fetchFilteredOrders,
   updateOrderPaymentStatus,
   updateOrderStatus,
   updateOrderDetails,
 } from "../../../features/admin/adminSlice";
+import { baseDataGridSx } from "../../../utils/dataGridStyles";
 import { getOrdersColumns } from "./columns";
 import { mapOrderRows, ORDER_STATUSES, PAYMENT_STATUSES } from "./helpers";
 import OrderDetailsDrawer from "./OrderDetailsDrawer";
+import SnapshotStatusBanner from "../../shared/SnapshotStatusBanner";
 
 const TABS = [
   { key: "all", label: "All Orders" },
@@ -24,29 +27,75 @@ const TABS = [
 function OrdersPanel({
   orders,
   mutationStatus,
+  snapshotStatus,
   selectedOrder,
   orderDetailsStatus,
   onRequestOrderDetails,
   onCloseOrderDetails,
 }) {
   const dispatch = useAppDispatch();
+  const { filteredOrders, filteredOrdersStatus } = useAppSelector((state) => state.admin);
 
   const [activeTab, setActiveTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [draftStatus, setDraftStatus] = useState({});
   const [draftPaymentStatus, setDraftPaymentStatus] = useState({});
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
 
-  const rawRows = useMemo(() => mapOrderRows(orders), [orders]);
+  // Debounce the search box so typing doesn't fire a server request per keystroke.
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm.trim());
+    }, 400);
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
+
+  const isFiltering = activeTab !== "all" || debouncedSearchTerm.length > 0;
+
+  // Whenever a tab or the (debounced) search term actually filters the list,
+  // ask the server for that exact slice instead of re-scanning the entire,
+  // ever-growing order history in the browser on every filter change. With
+  // no filter active, the already-fetched full `orders` list is shown as-is.
+  useEffect(() => {
+    if (!isFiltering) {
+      return;
+    }
+
+    dispatch(
+      fetchFilteredOrders({
+        orderStatus: activeTab !== "all" ? activeTab : undefined,
+        search: debouncedSearchTerm || undefined,
+      })
+    );
+  }, [dispatch, isFiltering, activeTab, debouncedSearchTerm]);
+
+  // On a failed filtered fetch, show nothing rather than silently keeping
+  // the *previous* filter's results on screen under the current tab/search
+  // label — a stale result set masquerading as a live one is worse than an
+  // empty grid with a clear error state.
+  const isFilteredFetchFailed = isFiltering && filteredOrdersStatus === "failed";
+
+  const rawRows = useMemo(() => {
+    if (isFilteredFetchFailed) {
+      return [];
+    }
+    return mapOrderRows(isFiltering ? filteredOrders : orders);
+  }, [isFiltering, isFilteredFetchFailed, filteredOrders, orders]);
+
+  // Tab badge counts always reflect the full, unfiltered order list — a
+  // server-filtered view only contains the currently-selected slice, so it
+  // can't be used to compute counts for every *other* tab too.
+  const countsSourceRows = useMemo(() => mapOrderRows(orders), [orders]);
 
   // Compute active order for drawer from orders array (instant fresh state) merged with populated details
   const drawerOrder = useMemo(() => {
     if (!selectedOrderId) return null;
 
-    const fromList = orders.find(
-      (o) => String(o._id || o.id) === String(selectedOrderId)
-    );
+    const fromList =
+      orders.find((o) => String(o._id || o.id) === String(selectedOrderId)) ||
+      filteredOrders.find((o) => String(o._id || o.id) === String(selectedOrderId));
 
     if (
       selectedOrder &&
@@ -63,44 +112,22 @@ function OrdersPanel({
     }
 
     return fromList || selectedOrder;
-  }, [selectedOrderId, orders, selectedOrder]);
+  }, [selectedOrderId, orders, filteredOrders, selectedOrder]);
 
-  // Compute status counts for tabs
+  // Compute status counts for tabs — always from the full, unfiltered list.
   const tabCounts = useMemo(() => {
-    const counts = { all: rawRows.length, new: 0, processing: 0, shipped: 0, delivered: 0, cancelled: 0 };
-    for (const row of rawRows) {
+    const counts = { all: countsSourceRows.length, new: 0, processing: 0, shipped: 0, delivered: 0, cancelled: 0 };
+    for (const row of countsSourceRows) {
       if (counts[row.orderStatus] !== undefined) {
         counts[row.orderStatus] += 1;
       }
     }
     return counts;
-  }, [rawRows]);
+  }, [countsSourceRows]);
 
-  // Filter rows by tab & search query
-  const filteredRows = useMemo(() => {
-    return rawRows.filter((row) => {
-      // 1. Tab filter
-      if (activeTab !== "all" && row.orderStatus !== activeTab) {
-        return false;
-      }
-
-      // 2. Search filter
-      if (searchTerm.trim()) {
-        const query = searchTerm.trim().toLowerCase();
-        const matchesRef = String(row.merchantOrderId || "").toLowerCase().includes(query);
-        const matchesName = String(row.customerName || "").toLowerCase().includes(query);
-        const matchesPhone = String(row.phone || "").toLowerCase().includes(query);
-        const matchesSecPhone = String(row.secondaryPhone || "").toLowerCase().includes(query);
-        const matchesGov = String(row.governorate || "").toLowerCase().includes(query);
-        const matchesCity = String(row.city || "").toLowerCase().includes(query);
-        const matchesTracking = String(row.trackingNumber || "").toLowerCase().includes(query);
-
-        return matchesRef || matchesName || matchesPhone || matchesSecPhone || matchesGov || matchesCity || matchesTracking;
-      }
-
-      return true;
-    });
-  }, [rawRows, activeTab, searchTerm]);
+  // rawRows is already correctly scoped: the full list when no filter is
+  // active, or the server-filtered slice for the current tab/search once one is.
+  const filteredRows = rawRows;
 
   function handleOpenOrder(orderId) {
     setSelectedOrderId(orderId);
@@ -218,6 +245,7 @@ function OrdersPanel({
 
   return (
     <section className="space-y-4">
+      <SnapshotStatusBanner status={snapshotStatus} />
       {/* Quick Status Tabs */}
       <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-3">
         {TABS.map((tab) => {
@@ -258,8 +286,12 @@ function OrdersPanel({
             <h3 className="text-sm font-bold text-slate-900">
               Orders Operations & Fulfillment
             </h3>
-            <p className="text-xs text-slate-600">
-              Showing {filteredRows.length} of {rawRows.length} total orders.
+            <p className={`text-xs ${isFilteredFetchFailed ? "font-semibold text-red-600" : "text-slate-600"}`}>
+              {isFilteredFetchFailed
+                ? "Couldn't load orders for this filter. Try again or clear the filter."
+                : isFiltering && filteredOrdersStatus === "loading"
+                  ? "Loading filtered orders..."
+                  : `Showing ${filteredRows.length} of ${countsSourceRows.length} total orders.`}
             </p>
           </div>
 
@@ -303,10 +335,9 @@ function OrdersPanel({
             }}
             disableRowSelectionOnClick
             sx={{
-              border: 0,
+              ...baseDataGridSx,
               "& .MuiDataGrid-columnHeaders": {
-                backgroundColor: "#f8fafc",
-                borderBottomColor: "#e2e8f0",
+                ...baseDataGridSx["& .MuiDataGrid-columnHeaders"],
                 fontSize: "12px",
                 fontWeight: "bold",
                 color: "#1e293b",

@@ -4,6 +4,7 @@ import { replaceById } from "./helpers";
 import { logoutAdmin } from "../../auth/authSlice";
 import {
   fetchAdminSnapshot,
+  fetchFilteredOrders,
   updateOrderStatus,
   updateOrderPaymentStatus,
   updateOrderDetails,
@@ -87,8 +88,30 @@ const adminSlice = createSlice({
         state.snapshotStatus = "failed";
         state.error = action.payload || "Unable to fetch admin snapshot";
       })
+      .addCase(fetchFilteredOrders.pending, (state, action) => {
+        state.filteredOrdersStatus = "loading";
+        // Track the latest in-flight request so a slower, superseded request
+        // (e.g. clicking "New" then "Processing" before the first resolves)
+        // can't land after the newer one and show the wrong tab's results.
+        state.filteredOrdersRequestId = action.meta.requestId;
+      })
+      .addCase(fetchFilteredOrders.fulfilled, (state, action) => {
+        if (action.meta.requestId !== state.filteredOrdersRequestId) {
+          return;
+        }
+        state.filteredOrdersStatus = "succeeded";
+        state.filteredOrders = action.payload;
+      })
+      .addCase(fetchFilteredOrders.rejected, (state, action) => {
+        if (action.meta.requestId !== state.filteredOrdersRequestId) {
+          return;
+        }
+        state.filteredOrdersStatus = "failed";
+        state.error = action.payload || "Unable to fetch filtered orders";
+      })
       .addCase(updateOrderStatus.fulfilled, (state, action) => {
         state.orders = replaceById(state.orders, action.payload.order);
+        state.filteredOrders = replaceById(state.filteredOrders, action.payload.order);
         const selectedOrderId = String(state.selectedOrderDetails?._id || state.selectedOrderDetails?.id || "");
 
         if (selectedOrderId && selectedOrderId === String(action.payload.order._id || action.payload.order.id)) {
@@ -104,6 +127,7 @@ const adminSlice = createSlice({
       })
       .addCase(updateOrderPaymentStatus.fulfilled, (state, action) => {
         state.orders = replaceById(state.orders, action.payload.order);
+        state.filteredOrders = replaceById(state.filteredOrders, action.payload.order);
         const selectedOrderId = String(state.selectedOrderDetails?._id || state.selectedOrderDetails?.id || "");
 
         if (selectedOrderId && selectedOrderId === String(action.payload.order._id || action.payload.order.id)) {
@@ -119,6 +143,7 @@ const adminSlice = createSlice({
       })
       .addCase(updateOrderDetails.fulfilled, (state, action) => {
         state.orders = replaceById(state.orders, action.payload.order);
+        state.filteredOrders = replaceById(state.filteredOrders, action.payload.order);
         const selectedOrderId = String(state.selectedOrderDetails?._id || state.selectedOrderDetails?.id || "");
 
         if (selectedOrderId && selectedOrderId === String(action.payload.order._id || action.payload.order.id)) {

@@ -29,8 +29,14 @@ export const adminApi = createApi({
           const state = getState();
           const token = state.auth.token;
           const adminRole = state.auth.admin?.role;
+          // Fail closed: only an explicit "super_admin" gets the full,
+          // privileged snapshot — a missing/unrecognized role (corrupted
+          // profile, a future role value this client doesn't know about)
+          // gets the restricted, orders-only view instead of silently
+          // defaulting to full access.
+          const isRestrictedToOrders = adminRole !== "super_admin";
 
-          if (adminRole === "order_manager") {
+          if (isRestrictedToOrders) {
             const ordersResponse = await apiRequest("/admin/orders", { token });
             return {
               data: {
@@ -59,7 +65,8 @@ export const adminApi = createApi({
             offersResponse,
             couponsResponse,
             tipsResponse,
-            productsResponse,
+            activeProductsResponse,
+            inactiveProductsResponse,
             contentResponse,
             shippingResponse
           ] = await Promise.all([
@@ -69,7 +76,12 @@ export const adminApi = createApi({
             apiRequest("/admin/offers", { token }),
             apiRequest("/admin/coupons", { token }),
             apiRequest("/admin/tips", { token }),
-            apiRequest("/products", { token }),
+            // The public /products endpoint defaults to isActive:true (correct
+            // for the storefront) — the admin table needs both, otherwise a
+            // product an admin deactivates disappears from their own view
+            // with no way to find and re-activate it.
+            apiRequest("/products?isActive=true", { token }),
+            apiRequest("/products?isActive=false", { token }),
             apiRequest("/content", { token }),
             apiRequest("/admin/shipping", { token })
           ]);
@@ -83,7 +95,10 @@ export const adminApi = createApi({
               offers: offersResponse.data || [],
               coupons: couponsResponse.data || [],
               tips: tipsResponse.data || [],
-              products: productsResponse.data || [],
+              products: [
+                ...(activeProductsResponse.data || []),
+                ...(inactiveProductsResponse.data || [])
+              ],
               content: contentResponse.data || EMPTY_CONTENT,
               shippingSettings: shippingResponse.data || {
                 globalFreeShipping: false,
@@ -100,6 +115,37 @@ export const adminApi = createApi({
           };
         }
       }
+    }),
+    getFilteredOrders: builder.query({
+      queryFn: async ({ orderStatus, search } = {}, { getState }) => {
+        try {
+          const token = getState().auth.token;
+          const params = new URLSearchParams();
+
+          if (orderStatus) {
+            params.set("orderStatus", orderStatus);
+          }
+
+          if (search) {
+            params.set("search", search);
+          }
+
+          const queryString = params.toString();
+          const response = await apiRequest(
+            `/admin/orders${queryString ? `?${queryString}` : ""}`,
+            { token }
+          );
+
+          return { data: response.data || [] };
+        } catch (error) {
+          return {
+            error: {
+              message: getErrorMessage(error)
+            }
+          };
+        }
+      },
+      keepUnusedDataFor: 30
     }),
     getOrderDetails: builder.query({
       queryFn: async (orderId, { getState }) => {

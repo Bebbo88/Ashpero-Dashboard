@@ -4,8 +4,9 @@ import { deleteProductReview } from "../../../features/admin/adminSlice";
 import StarRoundedIcon from "@mui/icons-material/StarRounded";
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import CircularProgress from "@mui/material/CircularProgress";
+import SnapshotStatusBanner from "../../shared/SnapshotStatusBanner";
 
-export default function ReviewsPanel({ products, mutationStatus }) {
+export default function ReviewsPanel({ products, mutationStatus, snapshotStatus }) {
   const dispatch = useAppDispatch();
   const [selectedProductId, setSelectedProductId] = useState("");
   const [deleteMessage, setDeleteMessage] = useState("");
@@ -37,8 +38,9 @@ export default function ReviewsPanel({ products, mutationStatus }) {
         deleteProductReview({ productId: selectedProductId, reviewId })
       ).unwrap();
       setDeleteMessage("Review deleted successfully.");
-    } catch (err) {
-      setDeleteMessage(`Error deleting review: ${err || "Failed"}`);
+    } catch (_err) {
+      // Failure is already surfaced by the global error banner (mutation
+      // rejections set state.admin.error) — no need to duplicate it here.
     } finally {
       setDeletingId(null);
     }
@@ -46,6 +48,7 @@ export default function ReviewsPanel({ products, mutationStatus }) {
 
   return (
     <article className="panel p-6 bg-white rounded-xl border border-slate-200 shadow-sm">
+      <SnapshotStatusBanner status={snapshotStatus} />
       <div className="mb-6">
         <h3 className="text-lg font-bold text-slate-900">
           Manage Text Reviews / تقييمات العملاء
@@ -74,7 +77,7 @@ export default function ReviewsPanel({ products, mutationStatus }) {
       </div>
 
       {deleteMessage && (
-        <div className={`mb-6 p-3 rounded-lg text-sm font-medium ${deleteMessage.includes("Error") ? "bg-red-50 text-red-700" : "bg-teal-50 text-teal-800"}`}>
+        <div className="mb-6 p-3 rounded-lg text-sm font-medium bg-teal-50 text-teal-800">
           {deleteMessage}
         </div>
       )}

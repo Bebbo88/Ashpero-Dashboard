@@ -1,8 +1,19 @@
+import DOMPurify from "dompurify";
+import { FilePreviewThumbnails } from "./FilePreviewThumbnails";
+
+const DESCRIPTION_SANITIZE_CONFIG = {
+  ALLOWED_TAGS: ["b", "strong", "span"],
+  ALLOWED_ATTR: ["style"],
+};
+
 export function ProductFormCard({
   editingProductId,
   mutationStatus,
   form,
   productImageFiles,
+  beforeImageFile,
+  afterImageFile,
+  popupGalleryFiles,
   editingPreview,
   customCategory,
   sizeDraft,
@@ -168,7 +179,9 @@ export function ProductFormCard({
               <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-1">Live Preview (English):</span>
               <div
                 className="text-slate-800 leading-relaxed font-normal [&_b]:font-bold [&_strong]:font-bold"
-                dangerouslySetInnerHTML={{ __html: form.description_en }}
+                dangerouslySetInnerHTML={{
+                  __html: DOMPurify.sanitize(form.description_en, DESCRIPTION_SANITIZE_CONFIG),
+                }}
               />
             </div>
           )}
@@ -255,7 +268,9 @@ export function ProductFormCard({
               <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-1">معاينة مباشرة (بالعربي):</span>
               <div
                 className="text-slate-800 leading-relaxed font-normal [&_b]:font-bold [&_strong]:font-bold"
-                dangerouslySetInnerHTML={{ __html: form.description_ar }}
+                dangerouslySetInnerHTML={{
+                  __html: DOMPurify.sanitize(form.description_ar, DESCRIPTION_SANITIZE_CONFIG),
+                }}
               />
             </div>
           )}
@@ -458,6 +473,8 @@ export function ProductFormCard({
               السعر (Price)
               <input
                 type="number"
+                min="0"
+                step="0.01"
                 className="w-full mt-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
                 name="price"
                 placeholder="مثال: 350"
@@ -470,6 +487,8 @@ export function ProductFormCard({
               الكمية / المخزون (Stock)
               <input
                 type="number"
+                min="0"
+                step="1"
                 className="w-full mt-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
                 name="stock"
                 placeholder="مثال: 99"
@@ -484,6 +503,8 @@ export function ProductFormCard({
             السعر الأصلي (Original Price - اختياري)
             <input
               type="number"
+              min="0"
+              step="0.01"
               className="w-full mt-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
               name="oldPrice"
               placeholder="مثال: 500"
@@ -502,6 +523,7 @@ export function ProductFormCard({
             onChange={onImageFilesChange}
             className="file-upload-input mt-1"
           />
+          <FilePreviewThumbnails files={productImageFiles} />
         </label>
 
         {!form.isBundle && (
@@ -516,6 +538,7 @@ export function ProductFormCard({
                   onChange={onBeforeImageChange}
                   className="file-upload-input mt-1"
                 />
+                <FilePreviewThumbnails files={beforeImageFile} />
               </label>
               <label className="text-xs font-semibold text-slate-700">
                 After Image (Optional)
@@ -525,6 +548,7 @@ export function ProductFormCard({
                   onChange={onAfterImageChange}
                   className="file-upload-input mt-1"
                 />
+                <FilePreviewThumbnails files={afterImageFile} />
               </label>
             </div>
 
@@ -539,6 +563,7 @@ export function ProductFormCard({
                   onChange={onPopupGalleryChange}
                   className="file-upload-input mt-1"
                 />
+                <FilePreviewThumbnails files={popupGalleryFiles} />
               </label>
             </div>
           </>

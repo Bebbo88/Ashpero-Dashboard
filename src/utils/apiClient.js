@@ -1,6 +1,6 @@
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
-const TOKEN_KEY = "ashpero_admin_token";
-const ADMIN_KEY = "ashpero_admin_profile";
+export const TOKEN_KEY = "ashpero_admin_token";
+export const ADMIN_KEY = "ashpero_admin_profile";
 
 function extractPayloadMessage(payload) {
   if (!payload || typeof payload !== "object") {

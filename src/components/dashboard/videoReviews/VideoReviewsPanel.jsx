@@ -1,8 +1,10 @@
 import { useState, useMemo } from "react";
 import { useAppDispatch } from "../../../app/hooks";
 import { updateProductVideos } from "../../../features/admin/adminSlice";
+import { filterValidFiles } from "../../../utils/fileValidation";
+import SnapshotStatusBanner from "../../shared/SnapshotStatusBanner";
 
-export default function VideoReviewsPanel({ products, mutationStatus }) {
+export default function VideoReviewsPanel({ products, mutationStatus, snapshotStatus }) {
   const dispatch = useAppDispatch();
   const [selectedProductId, setSelectedProductId] = useState("");
   const [videoFiles, setVideoFiles] = useState([]);
@@ -25,8 +27,17 @@ export default function VideoReviewsPanel({ products, mutationStatus }) {
   }
 
   function handleFileChange(e) {
-    const files = Array.from(e.target.files || []).slice(0, 4);
-    setVideoFiles(files);
+    const rejectedMessages = [];
+    const validFiles = filterValidFiles(e.target.files, {
+      maxSizeMB: 50,
+      acceptPrefix: "video/",
+      onReject: (_file, reason) => rejectedMessages.push(reason),
+    }).slice(0, 4);
+
+    setVideoFiles(validFiles);
+    setUploadMessage(
+      rejectedMessages.length > 0 ? `Error: ${rejectedMessages.join(" ")}` : ""
+    );
   }
 
   async function handleSubmit(e) {
@@ -52,13 +63,17 @@ export default function VideoReviewsPanel({ products, mutationStatus }) {
       ).unwrap();
       setUploadMessage("Review videos uploaded and updated successfully!");
       setVideoFiles([]);
-    } catch (err) {
-      setUploadMessage(`Error uploading videos: ${err || "Failed to update"}`);
+    } catch (_err) {
+      // Failure is already surfaced by the global error banner (mutation
+      // rejections set state.admin.error) — clear any leftover local
+      // message instead of duplicating it here.
+      setUploadMessage("");
     }
   }
 
   return (
     <article className="panel p-6 bg-white rounded-xl border border-slate-200 shadow-sm">
+      <SnapshotStatusBanner status={snapshotStatus} />
       <div className="mb-6">
         <h3 className="text-lg font-bold text-slate-900">
           Manage Customer Review Videos / تجارب العملاء

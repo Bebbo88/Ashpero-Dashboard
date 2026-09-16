@@ -48,6 +48,28 @@ export const fetchAdminSnapshot = createAsyncThunk(
   }
 );
 
+// Fetches the order list scoped by the server's own orderStatus/search
+// filters (already supported by GET /admin/orders) instead of re-filtering
+// the entire, ever-growing order history in the browser on every tab click
+// or keystroke.
+export const fetchFilteredOrders = createAsyncThunk(
+  "admin/fetchFilteredOrders",
+  async ({ orderStatus, search } = {}, { dispatch, rejectWithValue }) => {
+    try {
+      const data = await dispatch(
+        adminApi.endpoints.getFilteredOrders.initiate(
+          { orderStatus, search },
+          { subscribe: false, forceRefetch: true }
+        )
+      ).unwrap();
+
+      return data;
+    } catch (error) {
+      return rejectWithValue(getErrorMessage(error));
+    }
+  }
+);
+
 export const updateOrderStatus = createAsyncThunk(
   "admin/updateOrderStatus",
   async ({ orderId, orderStatus }, { getState, rejectWithValue }) => {
@@ -191,13 +213,13 @@ export const deleteProduct = createAsyncThunk(
 
 export const updateProductStock = createAsyncThunk(
   "admin/updateProductStock",
-  async ({ productId, stock }, { getState, rejectWithValue }) => {
+  async ({ productId, size, stock }, { getState, rejectWithValue }) => {
     try {
       const token = getState().auth.token;
       const response = await apiRequest(`/admin/products/${productId}/stock`, {
         method: "PATCH",
         token,
-        body: { stock }
+        body: { size, stock }
       });
 
       return {

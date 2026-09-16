@@ -29,7 +29,7 @@ function LoginView({ onSubmit, status, error, apiBaseUrl }) {
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-5xl items-center justify-center px-4 py-10">
       <section className="panel grid w-full overflow-hidden md:grid-cols-[1.1fr_1fr]">
-        <div className="hidden bg-gradient-to-br from-teal-700 via-teal-600 to-cyan-500 p-8 text-white md:block pt-2                    0">
+        <div className="hidden bg-gradient-to-br from-teal-700 via-teal-600 to-cyan-500 p-8 text-white md:block pt-20">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100">
             Ashperoo
           </p>

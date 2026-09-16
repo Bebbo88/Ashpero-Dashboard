@@ -1,15 +1,21 @@
 import { DataGrid } from "@mui/x-data-grid";
 import OverviewCharts from "../../charts/OverviewCharts";
+import { baseDataGridSx } from "../../../utils/dataGridStyles";
 import { recentOrdersColumns } from "./columns";
 import { buildOverviewViewModel } from "./helpers";
 
-function OverviewPanel({ dashboard, orders, inventory }) {
+function OverviewPanel({ dashboard, orders, inventory, snapshotStatus }) {
   const { firstRowCards, executiveCards, recentOrders } =
     buildOverviewViewModel({
       dashboard,
       orders,
       inventory,
     });
+
+  // Before the first real snapshot arrives, `dashboard` is still its
+  // all-zero initial state — show a loading placeholder instead of
+  // flashing "0" values that look identical to genuinely-zero data.
+  const isLoadingFirstSnapshot = snapshotStatus === "loading" || snapshotStatus === "idle";
 
   return (
     <section className="space-y-4">
@@ -19,10 +25,16 @@ function OverviewPanel({ dashboard, orders, inventory }) {
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
               {card.label}
             </p>
-            <p className="mt-2 text-2xl font-bold text-slate-900">
-              {card.value}
+            {isLoadingFirstSnapshot ? (
+              <div className="mt-2 h-7 w-16 animate-pulse rounded bg-slate-200" />
+            ) : (
+              <p className="mt-2 text-2xl font-bold text-slate-900">
+                {card.value}
+              </p>
+            )}
+            <p className="mt-1 text-xs text-slate-500">
+              {isLoadingFirstSnapshot ? "Loading..." : card.note}
             </p>
-            <p className="mt-1 text-xs text-slate-500">{card.note}</p>
           </article>
         ))}
       </div>
@@ -33,9 +45,13 @@ function OverviewPanel({ dashboard, orders, inventory }) {
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
               {card.label}
             </p>
-            <p className="mt-2 text-xl font-bold text-slate-900">
-              {card.value}
-            </p>
+            {isLoadingFirstSnapshot ? (
+              <div className="mt-2 h-6 w-14 animate-pulse rounded bg-slate-200" />
+            ) : (
+              <p className="mt-2 text-xl font-bold text-slate-900">
+                {card.value}
+              </p>
+            )}
             <p
               className={`mt-1 text-xs font-semibold ${
                 card.tone === "red"
@@ -45,7 +61,7 @@ function OverviewPanel({ dashboard, orders, inventory }) {
                     : "text-teal-700"
               }`}
             >
-              {card.trend}
+              {isLoadingFirstSnapshot ? "" : card.trend}
             </p>
           </article>
         ))}
@@ -66,16 +82,7 @@ function OverviewPanel({ dashboard, orders, inventory }) {
             columns={recentOrdersColumns}
             disableRowSelectionOnClick
             hideFooter
-            sx={{
-              border: 0,
-              "& .MuiDataGrid-columnHeaders": {
-                backgroundColor: "#f8fafc",
-                borderBottomColor: "#e2e8f0",
-              },
-              "& .MuiDataGrid-cell": {
-                borderBottomColor: "#eef2ff",
-              },
-            }}
+            sx={baseDataGridSx}
           />
         </div>
       </article>

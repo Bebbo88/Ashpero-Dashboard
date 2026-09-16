@@ -1,18 +1,21 @@
-import { useEffect, useState } from "react";
+import { lazy, useEffect, useState } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "./app/hooks";
 import LoginView from "./components/layout/LoginView";
 import DashboardLayout from "./components/layout/DashboardLayout";
-import OverviewPanel from "./components/dashboard/overview";
-import OrdersPanel from "./components/dashboard/orders";
-import ProductsPanel from "./components/dashboard/products/ProductsPanel";
-import VideoReviewsPanel from "./components/dashboard/videoReviews/VideoReviewsPanel";
-import OffersPanel from "./components/dashboard/offers";
-import CouponsPanel from "./components/dashboard/coupons";
-import TipsPanel from "./components/dashboard/tips";
-import ContentPanel from "./components/dashboard/content";
-import ReviewsPanel from "./components/dashboard/reviews/ReviewsPanel";
-import ShippingPanel from "./components/dashboard/shipping/ShippingPanel";
+
+// Lazy-loaded so a role that only ever sees Orders (order_manager) doesn't
+// download every other panel's code (and its dependencies, e.g. Chart.js).
+const OverviewPanel = lazy(() => import("./components/dashboard/overview"));
+const OrdersPanel = lazy(() => import("./components/dashboard/orders"));
+const ProductsPanel = lazy(() => import("./components/dashboard/products/ProductsPanel"));
+const VideoReviewsPanel = lazy(() => import("./components/dashboard/videoReviews/VideoReviewsPanel"));
+const OffersPanel = lazy(() => import("./components/dashboard/offers"));
+const CouponsPanel = lazy(() => import("./components/dashboard/coupons"));
+const TipsPanel = lazy(() => import("./components/dashboard/tips"));
+const ContentPanel = lazy(() => import("./components/dashboard/content"));
+const ReviewsPanel = lazy(() => import("./components/dashboard/reviews/ReviewsPanel"));
+const ShippingPanel = lazy(() => import("./components/dashboard/shipping/ShippingPanel"));
 import { clearAuthError, loginAdmin, logoutAdmin, refreshAdminToken } from "./features/auth/authSlice";
 import {
   clearAdminError,
@@ -51,7 +54,9 @@ function App() {
 
   const [lastUpdatedAt, setLastUpdatedAt] = useState("");
 
-  const role = admin?.role || "super_admin";
+  // Fail closed: an unrecognized/missing role should see the *least*
+  // privileged view, never silently default to full super_admin access.
+  const role = admin?.role || "order_manager";
   const isOrderManager = role === "order_manager";
   const defaultDashboardPath = isOrderManager ? "/dashboard/orders" : "/dashboard/overview";
 
@@ -92,6 +97,15 @@ function App() {
 
   useEffect(() => {
     function handleAuthExpired() {
+      // This unmounts every panel immediately, discarding any unsaved form
+      // input (a half-written product description, an in-progress offer,
+      // etc.) with no other warning. The alert blocks here specifically so
+      // the still-visible form stays on screen long enough to copy anything
+      // important before the forced logout below tears it down.
+      window.alert(
+        "Your session has expired. Please copy any unsaved changes now — you'll need to log in again after closing this message."
+      );
+
       dispatch(adminApi.util.resetApiState());
       dispatch(logoutAdmin());
       dispatch(clearAdminError());
@@ -157,6 +171,7 @@ function App() {
             <OrdersPanel
               orders={orders}
               mutationStatus={mutationStatus}
+              snapshotStatus={snapshotStatus}
               selectedOrder={selectedOrderDetails}
               orderDetailsStatus={orderDetailsStatus}
               onRequestOrderDetails={(orderId) => dispatch(fetchOrderDetails(orderId))}
@@ -168,15 +183,15 @@ function App() {
         {/* Super Admin exclusive routes */}
         {!isOrderManager && (
           <>
-            <Route path="overview" element={<OverviewPanel dashboard={dashboard} orders={orders} inventory={inventory} />} />
-            <Route path="products" element={<ProductsPanel products={products} mutationStatus={mutationStatus} />} />
-            <Route path="shipping" element={<ShippingPanel shippingSettings={shippingSettings} mutationStatus={mutationStatus} />} />
-            <Route path="text-reviews" element={<ReviewsPanel products={products} mutationStatus={mutationStatus} />} />
-            <Route path="video-reviews" element={<VideoReviewsPanel products={products} mutationStatus={mutationStatus} />} />
-            <Route path="offers" element={<OffersPanel offers={offers} products={products} mutationStatus={mutationStatus} />} />
-            <Route path="coupons" element={<CouponsPanel coupons={coupons} mutationStatus={mutationStatus} />} />
-            <Route path="tips" element={<TipsPanel tips={tips} mutationStatus={mutationStatus} />} />
-            <Route path="content" element={<ContentPanel content={content} mutationStatus={mutationStatus} />} />
+            <Route path="overview" element={<OverviewPanel dashboard={dashboard} orders={orders} inventory={inventory} snapshotStatus={snapshotStatus} />} />
+            <Route path="products" element={<ProductsPanel products={products} mutationStatus={mutationStatus} snapshotStatus={snapshotStatus} />} />
+            <Route path="shipping" element={<ShippingPanel shippingSettings={shippingSettings} mutationStatus={mutationStatus} snapshotStatus={snapshotStatus} />} />
+            <Route path="text-reviews" element={<ReviewsPanel products={products} mutationStatus={mutationStatus} snapshotStatus={snapshotStatus} />} />
+            <Route path="video-reviews" element={<VideoReviewsPanel products={products} mutationStatus={mutationStatus} snapshotStatus={snapshotStatus} />} />
+            <Route path="offers" element={<OffersPanel offers={offers} products={products} mutationStatus={mutationStatus} snapshotStatus={snapshotStatus} />} />
+            <Route path="coupons" element={<CouponsPanel coupons={coupons} mutationStatus={mutationStatus} snapshotStatus={snapshotStatus} />} />
+            <Route path="tips" element={<TipsPanel tips={tips} mutationStatus={mutationStatus} snapshotStatus={snapshotStatus} />} />
+            <Route path="content" element={<ContentPanel content={content} mutationStatus={mutationStatus} snapshotStatus={snapshotStatus} />} />
           </>
         )}
 

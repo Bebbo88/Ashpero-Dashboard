@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import DashboardRoundedIcon from "@mui/icons-material/DashboardRounded";
 import Inventory2RoundedIcon from "@mui/icons-material/Inventory2Rounded";
 import ReceiptLongRoundedIcon from "@mui/icons-material/ReceiptLongRounded";
@@ -37,8 +38,10 @@ export const DASHBOARD_SECTIONS = [
   { key: "content", label: "Site Content", path: "/dashboard/content", roles: ["super_admin"] },
 ];
 
-function Sidebar({ admin }) {
-  const role = admin?.role || "super_admin";
+function SidebarContent({ admin, onNavigate }) {
+  // Fail closed: an unrecognized/missing role should see the *least*
+  // privileged view, never silently default to full super_admin access.
+  const role = admin?.role || "order_manager";
   const isOrderManager = role === "order_manager";
 
   const visibleSections = DASHBOARD_SECTIONS.filter((section) =>
@@ -46,7 +49,7 @@ function Sidebar({ admin }) {
   );
 
   return (
-    <aside className="panel w-full p-4 md:w-72 md:min-h-[calc(100vh-3rem)] md:sticky md:top-6">
+    <>
       <div className="mb-6 flex items-center gap-3 rounded-xl border border-teal-100 bg-teal-50 px-3 py-3">
         <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-teal-700 text-white">
           <SellRoundedIcon fontSize="small" />
@@ -69,6 +72,7 @@ function Sidebar({ admin }) {
             <NavLink
               key={section.key}
               to={section.path}
+              onClick={onNavigate}
               className={({ isActive }) =>
                 `block w-full rounded-xl px-3 py-2 text-left transition ${
                   isActive
@@ -95,7 +99,41 @@ function Sidebar({ admin }) {
           </p>
         </div>
       )}
-    </aside>
+    </>
+  );
+}
+
+function Sidebar({ admin, isMobileOpen, onMobileClose }) {
+  return (
+    <>
+      {/* Desktop: always-visible sticky sidebar */}
+      <aside className="panel hidden p-4 md:block md:w-72 md:min-h-[calc(100vh-3rem)] md:sticky md:top-6">
+        <SidebarContent admin={admin} />
+      </aside>
+
+      {/* Mobile: slide-in drawer, only rendered while open */}
+      {isMobileOpen ? (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={onMobileClose}
+          />
+          <div className="absolute left-0 top-0 bottom-0 w-72 max-w-[85vw] overflow-y-auto bg-white p-4 shadow-2xl">
+            <div className="mb-2 flex justify-end">
+              <button
+                type="button"
+                onClick={onMobileClose}
+                aria-label="Close navigation menu"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100"
+              >
+                <CloseRoundedIcon fontSize="small" />
+              </button>
+            </div>
+            <SidebarContent admin={admin} onNavigate={onMobileClose} />
+          </div>
+        </div>
+      ) : null}
+    </>
   );
 }
 

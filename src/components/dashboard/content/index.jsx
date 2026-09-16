@@ -2,8 +2,11 @@ import { useEffect, useState } from "react";
 import { useAppDispatch } from "../../../app/hooks";
 import { updateSiteContent } from "../../../features/admin/adminSlice";
 import { buildContentFormData, toDateTimeInputValue } from "./helpers";
+import { validateFiles } from "../../../utils/fileValidation";
+import { FilePreviewThumbnails } from "../products/FilePreviewThumbnails";
+import SnapshotStatusBanner from "../../shared/SnapshotStatusBanner";
 
-function ContentPanel({ content, mutationStatus }) {
+function ContentPanel({ content, mutationStatus, snapshotStatus }) {
   const dispatch = useAppDispatch();
   const [topBannerTextEn, setTopBannerTextEn] = useState("");
   const [topBannerTextAr, setTopBannerTextAr] = useState("");
@@ -69,6 +72,7 @@ function ContentPanel({ content, mutationStatus }) {
 
   return (
     <section className="space-y-4">
+      <SnapshotStatusBanner status={snapshotStatus} />
       <article className="panel p-4">
         <div className="mb-3">
           <h3 className="text-sm font-bold text-slate-900">Site Content Controls</h3>
@@ -154,12 +158,13 @@ function ContentPanel({ content, mutationStatus }) {
               type="file"
               accept="image/*"
               multiple
-              onChange={(event) => setHeroImageFiles(Array.from(event.target.files || []))}
+              onChange={(event) => setHeroImageFiles(validateFiles(event.target.files, { maxSizeMB: 5 }))}
               className="file-upload-input mt-1.5"
             />
             <span className="mt-1 block text-xs text-slate-500">
               Selected: {heroImageFiles.length || 0} file(s)
             </span>
+            <FilePreviewThumbnails files={heroImageFiles} />
           </label>
 
           <label className="text-sm font-semibold text-slate-700">
@@ -168,12 +173,13 @@ function ContentPanel({ content, mutationStatus }) {
               type="file"
               accept="image/*"
               multiple
-              onChange={(event) => setBannerFiles(Array.from(event.target.files || []))}
+              onChange={(event) => setBannerFiles(validateFiles(event.target.files, { maxSizeMB: 5 }))}
               className="file-upload-input mt-1.5"
             />
             <span className="mt-1 block text-xs text-slate-500">
               Selected: {bannerFiles.length || 0} file(s)
             </span>
+            <FilePreviewThumbnails files={bannerFiles} />
           </label>
 
           <label className="text-sm font-semibold text-slate-700">
@@ -182,12 +188,13 @@ function ContentPanel({ content, mutationStatus }) {
               type="file"
               accept="image/*"
               multiple
-              onChange={(event) => setSpotlightImageFiles(Array.from(event.target.files || []))}
+              onChange={(event) => setSpotlightImageFiles(validateFiles(event.target.files, { maxSizeMB: 5 }))}
               className="file-upload-input mt-1.5"
             />
             <span className="mt-1 block text-xs text-slate-500">
               Selected: {spotlightImageFiles.length || 0} file(s)
             </span>
+            <FilePreviewThumbnails files={spotlightImageFiles} />
           </label>
 
           <label className="text-sm font-semibold text-slate-700">
@@ -195,7 +202,7 @@ function ContentPanel({ content, mutationStatus }) {
             <input
               type="file"
               accept="image/*"
-              onChange={(event) => setProductsBannerImageFile(event.target.files?.[0] || null)}
+              onChange={(event) => setProductsBannerImageFile(validateFiles(event.target.files, { maxSizeMB: 5 })[0] || null)}
               className="file-upload-input mt-1.5"
             />
             <span className="mt-1 block text-xs text-slate-500">
@@ -205,6 +212,7 @@ function ContentPanel({ content, mutationStatus }) {
                   ? `Current image: ${content.productsBannerImage}`
                   : "Default: /assets/all_productss.jpg"}
             </span>
+            <FilePreviewThumbnails files={productsBannerImageFile} />
           </label>
 
           <label className="text-sm font-semibold text-slate-700">
@@ -212,7 +220,7 @@ function ContentPanel({ content, mutationStatus }) {
             <input
               type="file"
               accept="image/*"
-              onChange={(event) => setOffersBannerImageFile(event.target.files?.[0] || null)}
+              onChange={(event) => setOffersBannerImageFile(validateFiles(event.target.files, { maxSizeMB: 5 })[0] || null)}
               className="file-upload-input mt-1.5"
             />
             <span className="mt-1 block text-xs text-slate-500">
@@ -222,6 +230,7 @@ function ContentPanel({ content, mutationStatus }) {
                   ? `Current image: ${content.offersBannerImage}`
                   : "Optional / Falls back to Spotlight/Banners"}
             </span>
+            <FilePreviewThumbnails files={offersBannerImageFile} />
           </label>
 
           <label className="text-sm font-semibold text-slate-700">
@@ -229,7 +238,7 @@ function ContentPanel({ content, mutationStatus }) {
             <input
               type="file"
               accept="image/*"
-              onChange={(event) => setPopupImageFile(event.target.files?.[0] || null)}
+              onChange={(event) => setPopupImageFile(validateFiles(event.target.files, { maxSizeMB: 5 })[0] || null)}
               className="file-upload-input mt-1.5"
             />
             <span className="mt-1 block text-xs text-slate-500">
@@ -239,6 +248,7 @@ function ContentPanel({ content, mutationStatus }) {
                   ? `Current popup image: ${content.popupImage}`
                   : "Optional"}
             </span>
+            <FilePreviewThumbnails files={popupImageFile} />
           </label>
 
           <label className="text-sm font-semibold text-slate-700">

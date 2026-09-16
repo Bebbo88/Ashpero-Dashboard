@@ -8,8 +8,9 @@ import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import StarsRoundedIcon from "@mui/icons-material/StarsRounded";
 import SaveRoundedIcon from "@mui/icons-material/SaveRounded";
+import SnapshotStatusBanner from "../../shared/SnapshotStatusBanner";
 
-export function ShippingPanel({ shippingSettings, mutationStatus }) {
+export function ShippingPanel({ shippingSettings, mutationStatus, snapshotStatus }) {
   const dispatch = useAppDispatch();
 
   const [globalFreeShipping, setGlobalFreeShipping] = useState(false);
@@ -35,7 +36,13 @@ export function ShippingPanel({ shippingSettings, mutationStatus }) {
       );
       setGovernorates(
         Array.isArray(shippingSettings.governorates)
-          ? shippingSettings.governorates.map((g) => ({ ...g }))
+          ? shippingSettings.governorates.map((g) => ({
+              ...g,
+              // Stable per-row identity for this browser session, independent
+              // of name (which can collide) or _id (which new rows don't have
+              // yet) — so edits/deletes always act on the exact row clicked.
+              _clientKey: g._id || crypto.randomUUID(),
+            }))
           : []
       );
     }
@@ -85,18 +92,41 @@ export function ShippingPanel({ shippingSettings, mutationStatus }) {
   };
 
   const handleDeleteGov = (index) => {
+    // This only removes the row from local state — it isn't persisted until
+    // "Save All Changes" is clicked, but that also means an accidental
+    // removal here silently rides along with whatever *other* edit the
+    // admin saves next, unless confirmed now.
+    if (!window.confirm("Remove this governorate? This takes effect the next time you save.")) {
+      return;
+    }
+
     setGovernorates((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleAddNewGovernorate = (e) => {
     e.preventDefault();
-    if (!newGov.name_ar.trim() || !newGov.name_en.trim()) return;
+    const nameAr = newGov.name_ar.trim();
+    const nameEn = newGov.name_en.trim();
+    if (!nameAr || !nameEn) return;
+
+    const isDuplicate = governorates.some(
+      (g) =>
+        g.name_ar.trim().toLowerCase() === nameAr.toLowerCase() &&
+        g.name_en.trim().toLowerCase() === nameEn.toLowerCase()
+    );
+    if (isDuplicate) {
+      window.alert(
+        "A governorate with this name already exists. Use a different name or edit the existing row."
+      );
+      return;
+    }
 
     setGovernorates((prev) => [
       ...prev,
       {
-        name_ar: newGov.name_ar.trim(),
-        name_en: newGov.name_en.trim(),
+        _clientKey: crypto.randomUUID(),
+        name_ar: nameAr,
+        name_en: nameEn,
         shippingCost: Number(newGov.shippingCost) || 0,
         isFreeShipping: Boolean(newGov.isFreeShipping),
         isActive: true,
@@ -118,7 +148,7 @@ export function ShippingPanel({ shippingSettings, mutationStatus }) {
       updateShippingSettings({
         globalFreeShipping,
         defaultShippingCost: Number(defaultShippingCost) || 50,
-        governorates,
+        governorates: governorates.map(({ _clientKey, ...gov }) => gov),
       })
     );
   };
@@ -127,6 +157,7 @@ export function ShippingPanel({ shippingSettings, mutationStatus }) {
 
   return (
     <div className="space-y-6">
+      <SnapshotStatusBanner status={snapshotStatus} />
       {/* Top Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -379,13 +410,13 @@ export function ShippingPanel({ shippingSettings, mutationStatus }) {
             <tbody className="divide-y divide-slate-100">
               {filteredGovernorates.map((gov, idx) => {
                 const actualIndex = governorates.findIndex(
-                  (g) => g.name_ar === gov.name_ar && g.name_en === gov.name_en
+                  (g) => g._clientKey === gov._clientKey
                 );
                 const isFree = gov.isFreeShipping || globalFreeShipping;
 
                 return (
                   <tr
-                    key={gov._id || `${gov.name_en}-${idx}`}
+                    key={gov._clientKey}
                     className={`transition-colors hover:bg-slate-50/80 ${
                       !gov.isActive ? "opacity-50 bg-slate-50/50" : ""
                     }`}

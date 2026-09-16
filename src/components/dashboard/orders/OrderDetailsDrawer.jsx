@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import PrintRoundedIcon from "@mui/icons-material/PrintRounded";
 import ContentCopyRoundedIcon from "@mui/icons-material/ContentCopyRounded";
@@ -6,6 +6,16 @@ import CheckRoundedIcon from "@mui/icons-material/CheckRounded";
 import LocalShippingRoundedIcon from "@mui/icons-material/LocalShippingRounded";
 import { formatCurrency, formatDateTime } from "../../../utils/formatters";
 import { ORDER_STATUSES, PAYMENT_STATUSES, ORDER_STATUS_CONFIG, PAYMENT_STATUS_CONFIG } from "./helpers";
+
+const HTML_ESCAPE_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+
+// The invoice print view builds a raw HTML string from customer-entered
+// checkout fields (name, note, address, etc.) — any of those must be escaped
+// before being interpolated, or a malicious order note becomes a script that
+// runs in a same-origin window with access back into the live admin session.
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (char) => HTML_ESCAPE_MAP[char]);
+}
 
 function OrderDetailsDrawer({
   order,
@@ -16,6 +26,15 @@ function OrderDetailsDrawer({
 }) {
   const [copiedPhone, setCopiedPhone] = useState(false);
   const [copiedAddress, setCopiedAddress] = useState(false);
+  const copiedPhoneTimeoutRef = useRef(null);
+  const copiedAddressTimeoutRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      clearTimeout(copiedPhoneTimeoutRef.current);
+      clearTimeout(copiedAddressTimeoutRef.current);
+    };
+  }, []);
 
   // Form states
   const [orderStatus, setOrderStatus] = useState("new");
@@ -57,11 +76,13 @@ function OrderDetailsDrawer({
   function handleCopy(text, type) {
     navigator.clipboard.writeText(text);
     if (type === "phone") {
+      clearTimeout(copiedPhoneTimeoutRef.current);
       setCopiedPhone(true);
-      setTimeout(() => setCopiedPhone(false), 2000);
+      copiedPhoneTimeoutRef.current = setTimeout(() => setCopiedPhone(false), 2000);
     } else {
+      clearTimeout(copiedAddressTimeoutRef.current);
       setCopiedAddress(true);
-      setTimeout(() => setCopiedAddress(false), 2000);
+      copiedAddressTimeoutRef.current = setTimeout(() => setCopiedAddress(false), 2000);
     }
   }
 
@@ -76,18 +97,24 @@ function OrderDetailsDrawer({
   }
 
   function handlePrintInvoice() {
+    // Passing "noopener" (or "noreferrer", which implies it) in the features
+    // string makes window.open() itself return null in Chrome/Firefox/Edge —
+    // that would silently break Print Invoice entirely. Manually nulling
+    // `.opener` on the handle we get back achieves the same isolation
+    // without that side effect.
     const printWindow = window.open("", "_blank");
     if (!printWindow) return;
+    printWindow.opener = null;
 
     const itemsHtml = (order.items || [])
       .map(
         (item) => `
         <tr>
           <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">
-            <strong>${item.productName || item.productId?.name_en || item.productId?.name || "Product"}</strong>
-            ${item.selectedSize ? `<br><small style="color: #64748b;">Size: ${item.selectedSize}</small>` : ""}
+            <strong>${escapeHtml(item.productName || item.productId?.name_en || item.productId?.name || "Product")}</strong>
+            ${item.selectedSize ? `<br><small style="color: #64748b;">Size: ${escapeHtml(item.selectedSize)}</small>` : ""}
           </td>
-          <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">${item.quantity}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center;">${escapeHtml(item.quantity)}</td>
           <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: right;">${formatCurrency(item.unitPrice || item.priceAtPurchase)}</td>
           <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: bold;">
             ${formatCurrency((item.priceAtPurchase || item.unitPrice || 0) * (item.quantity || 1))}
@@ -100,7 +127,7 @@ function OrderDetailsDrawer({
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Invoice - ${order.merchantOrderId || order._id}</title>
+        <title>Invoice - ${escapeHtml(order.merchantOrderId || order._id)}</title>
         <style>
           body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #0f172a; margin: 0; padding: 24px; font-size: 13px; }
           .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #0f172a; padding-bottom: 16px; margin-bottom: 20px; }
@@ -128,26 +155,26 @@ function OrderDetailsDrawer({
           </div>
           <div class="meta">
             <h2 style="margin: 0; font-size: 18px;">INVOICE / PACKING SLIP</h2>
-            <p style="margin: 4px 0; font-family: monospace; font-weight: bold;">${order.merchantOrderId || order._id}</p>
-            <p style="margin: 0; color: #64748b;">${new Date(order.createdAt).toLocaleDateString("en-EG", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
+            <p style="margin: 4px 0; font-family: monospace; font-weight: bold;">${escapeHtml(order.merchantOrderId || order._id)}</p>
+            <p style="margin: 0; color: #64748b;">${escapeHtml(new Date(order.createdAt).toLocaleDateString("en-EG", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }))}</p>
           </div>
         </div>
 
         <div class="info-grid section">
           <div>
             <div class="section-title">Customer & Delivery Details</div>
-            <p style="margin: 0; font-weight: bold; font-size: 14px;">${order.customerName}</p>
-            <p style="margin: 4px 0; font-family: monospace; font-size: 13px;">📞 ${order.phone} ${order.secondaryPhone ? ` / ${order.secondaryPhone}` : ""}</p>
-            <p style="margin: 4px 0; line-height: 1.4;">📍 ${fullAddress}</p>
-            ${shipping.governorate ? `<p style="margin: 2px 0; color: #475569;">Governorate: ${shipping.governorate}</p>` : ""}
+            <p style="margin: 0; font-weight: bold; font-size: 14px;">${escapeHtml(order.customerName)}</p>
+            <p style="margin: 4px 0; font-family: monospace; font-size: 13px;">📞 ${escapeHtml(order.phone)} ${order.secondaryPhone ? ` / ${escapeHtml(order.secondaryPhone)}` : ""}</p>
+            <p style="margin: 4px 0; line-height: 1.4;">📍 ${escapeHtml(fullAddress)}</p>
+            ${shipping.governorate ? `<p style="margin: 2px 0; color: #475569;">Governorate: ${escapeHtml(shipping.governorate)}</p>` : ""}
           </div>
           <div style="text-align: right;">
             <div class="section-title">Payment & Shipping Info</div>
-            <p style="margin: 0;">Payment Method: <strong>${(order.paymentMethod || "COD").toUpperCase()}</strong></p>
-            <p style="margin: 4px 0;">Payment Status: <strong>${(order.paymentStatus || "pending").toUpperCase()}</strong></p>
-            ${order.trackingNumber ? `<p style="margin: 4px 0;">Tracking No: <strong>${order.trackingNumber}</strong></p>` : ""}
-            ${order.shippingCompany ? `<p style="margin: 4px 0;">Courier: <strong>${order.shippingCompany}</strong></p>` : ""}
-            ${order.orderNote ? `<p style="margin: 8px 0; font-style: italic; color: #b45309; background: #fef3c7; padding: 6px; border-radius: 4px; text-align: left;">Note: ${order.orderNote}</p>` : ""}
+            <p style="margin: 0;">Payment Method: <strong>${escapeHtml((order.paymentMethod || "COD").toUpperCase())}</strong></p>
+            <p style="margin: 4px 0;">Payment Status: <strong>${escapeHtml((order.paymentStatus || "pending").toUpperCase())}</strong></p>
+            ${order.trackingNumber ? `<p style="margin: 4px 0;">Tracking No: <strong>${escapeHtml(order.trackingNumber)}</strong></p>` : ""}
+            ${order.shippingCompany ? `<p style="margin: 4px 0;">Courier: <strong>${escapeHtml(order.shippingCompany)}</strong></p>` : ""}
+            ${order.orderNote ? `<p style="margin: 8px 0; font-style: italic; color: #b45309; background: #fef3c7; padding: 6px; border-radius: 4px; text-align: left;">Note: ${escapeHtml(order.orderNote)}</p>` : ""}
           </div>
         </div>
 

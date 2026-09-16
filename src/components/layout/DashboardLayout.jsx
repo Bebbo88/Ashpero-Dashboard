@@ -1,6 +1,15 @@
+import { Suspense, useState } from "react";
 import { Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
+
+function PanelLoadingFallback() {
+  return (
+    <div className="panel flex min-h-[240px] items-center justify-center p-4 text-sm font-semibold text-slate-500">
+      Loading...
+    </div>
+  );
+}
 
 function DashboardLayout({
   admin,
@@ -13,16 +22,23 @@ function DashboardLayout({
   onLogout,
   onDismissError
 }) {
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
   return (
     <main className="mx-auto w-full max-w-[1650px] px-3 py-4 md:px-6 md:py-6">
       <div className="grid gap-4 md:grid-cols-[18rem_1fr] md:items-start">
-        <Sidebar admin={admin} />
+        <Sidebar
+          admin={admin}
+          isMobileOpen={isMobileSidebarOpen}
+          onMobileClose={() => setIsMobileSidebarOpen(false)}
+        />
 
         <section className="min-w-0">
           <TopBar
             admin={admin}
             onRefresh={onRefresh}
             onLogout={onLogout}
+            onOpenSidebar={() => setIsMobileSidebarOpen(true)}
             lastMessage={lastMessage}
             snapshotStatus={snapshotStatus}
             mutationStatus={mutationStatus}
@@ -44,7 +60,9 @@ function DashboardLayout({
             </div>
           ) : null}
 
-          <Outlet />
+          <Suspense fallback={<PanelLoadingFallback />}>
+            <Outlet />
+          </Suspense>
         </section>
       </div>
     </main>

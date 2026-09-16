@@ -1,8 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { apiRequest } from "../../utils/apiClient";
-
-const TOKEN_KEY = "ashpero_admin_token";
-const ADMIN_KEY = "ashpero_admin_profile";
+import { ADMIN_KEY, TOKEN_KEY, apiRequest } from "../../utils/apiClient";
 
 function readAdminProfile() {
   try {
@@ -109,7 +106,11 @@ const authSlice = createSlice({
         state.status = "failed";
         state.error = action.payload || "Unable to login";
       })
+      .addCase(refreshAdminToken.pending, (state) => {
+        state.status = "loading";
+      })
       .addCase(refreshAdminToken.fulfilled, (state, action) => {
+        state.status = "succeeded";
         state.token = action.payload.token;
         state.admin = action.payload.admin || state.admin;
 
@@ -117,6 +118,20 @@ const authSlice = createSlice({
         if (action.payload.admin) {
           localStorage.setItem(ADMIN_KEY, JSON.stringify(action.payload.admin));
         }
+      })
+      .addCase(refreshAdminToken.rejected, (state) => {
+        // No error is surfaced here on purpose — this refresh runs silently
+        // on app load, and failing just means there's no existing session
+        // (the common case for a fresh visit), which correctly falls back to
+        // showing the login screen rather than an error banner.
+        //
+        // Status must NOT go back to "idle" here: App.jsx retries this silent
+        // refresh whenever status is "idle" and there's no token, so setting
+        // "idle" on every rejection re-triggers the same refresh forever —
+        // an infinite request loop. "unauthenticated" is a distinct terminal
+        // state that satisfies neither that retry condition nor the
+        // "loading" check the login button uses.
+        state.status = "unauthenticated";
       });
   }
 });

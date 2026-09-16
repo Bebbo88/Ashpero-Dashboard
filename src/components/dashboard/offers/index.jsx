@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import { useAppDispatch } from "../../../app/hooks";
 import { createOffer, deleteOffer, updateOffer } from "../../../features/admin/adminSlice";
+import { baseDataGridSx } from "../../../utils/dataGridStyles";
 import {
   INITIAL_FORM,
   buildOfferFormData,
@@ -12,8 +13,9 @@ import {
   toDateInputValue
 } from "./helpers";
 import { getOffersColumns } from "./columns";
+import SnapshotStatusBanner from "../../shared/SnapshotStatusBanner";
 
-function OffersPanel({ offers, products, mutationStatus }) {
+function OffersPanel({ offers, products, mutationStatus, snapshotStatus }) {
   const dispatch = useAppDispatch();
   const [form, setForm] = useState(INITIAL_FORM);
   const [editingOfferId, setEditingOfferId] = useState("");
@@ -55,6 +57,18 @@ function OffersPanel({ offers, products, mutationStatus }) {
   async function handleSubmit(event) {
     event.preventDefault();
 
+    const discountValueNum = Number(form.discountValue);
+
+    if (form.discountType === "percentage" && discountValueNum > 100) {
+      window.alert("A percentage discount can't be more than 100%.");
+      return;
+    }
+
+    if (form.startDate && form.endDate && form.endDate < form.startDate) {
+      window.alert("The end date must be on or after the start date.");
+      return;
+    }
+
     const formData = buildOfferFormData(form);
 
     try {
@@ -84,8 +98,16 @@ function OffersPanel({ offers, products, mutationStatus }) {
     });
   }
 
-  function removeOffer(id) {
-    dispatch(deleteOffer(id));
+  async function removeOffer(id) {
+    if (!window.confirm("Are you sure you want to delete this offer? This cannot be undone.")) {
+      return;
+    }
+
+    try {
+      await dispatch(deleteOffer(id)).unwrap();
+    } catch (_error) {
+      return;
+    }
 
     if (editingOfferId === id) {
       resetForm();
@@ -94,6 +116,7 @@ function OffersPanel({ offers, products, mutationStatus }) {
 
   return (
     <section className="space-y-4">
+      <SnapshotStatusBanner status={snapshotStatus} />
       <article className="panel p-4">
         <div className="mb-3">
           <h3 className="text-sm font-bold text-slate-900">
@@ -133,6 +156,7 @@ function OffersPanel({ offers, products, mutationStatus }) {
             name="discountValue"
             type="number"
             min="0"
+            max={form.discountType === "percentage" ? "100" : undefined}
             value={form.discountValue}
             onChange={setField}
             placeholder="Discount value"
@@ -150,6 +174,7 @@ function OffersPanel({ offers, products, mutationStatus }) {
           <input
             name="endDate"
             type="date"
+            min={form.startDate || undefined}
             value={form.endDate}
             onChange={setField}
             required
@@ -222,16 +247,7 @@ function OffersPanel({ offers, products, mutationStatus }) {
               }
             }}
             disableRowSelectionOnClick
-            sx={{
-              border: 0,
-              "& .MuiDataGrid-columnHeaders": {
-                backgroundColor: "#f8fafc",
-                borderBottomColor: "#e2e8f0"
-              },
-              "& .MuiDataGrid-cell": {
-                borderBottomColor: "#eef2ff"
-              }
-            }}
+            sx={baseDataGridSx}
           />
         </div>
       </article>

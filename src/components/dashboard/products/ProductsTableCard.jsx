@@ -1,5 +1,6 @@
 import { DataGrid } from "@mui/x-data-grid";
 import { formatCurrency, formatDateTime } from "../../../utils/formatters";
+import { baseDataGridSx } from "../../../utils/dataGridStyles";
 import { formatList } from "./helpers";
 
 function ProductsTableCard({
@@ -10,12 +11,9 @@ function ProductsTableCard({
   categoryFilter,
   productTypeFilter,
   skinTypeFilter,
-  stockDraft,
   onCategoryFilterChange,
   onProductTypeFilterChange,
   onSkinTypeFilterChange,
-  onChangeStockDraft,
-  onSaveStock,
   onStartEdit,
   onRemoveProduct,
 }) {
@@ -247,16 +245,7 @@ function ProductsTableCard({
             },
           }}
           disableRowSelectionOnClick
-          sx={{
-            border: 0,
-            "& .MuiDataGrid-columnHeaders": {
-              backgroundColor: "#f8fafc",
-              borderBottomColor: "#e2e8f0",
-            },
-            "& .MuiDataGrid-cell": {
-              borderBottomColor: "#eef2ff",
-            },
-          }}
+          sx={baseDataGridSx}
         />
       </div>
     </article>

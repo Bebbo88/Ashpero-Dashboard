@@ -5,7 +5,6 @@ import { BrowserRouter } from "react-router-dom";
 import { createTheme, CssBaseline, ThemeProvider } from "@mui/material";
 import App from "./App";
 import { store } from "./app/store";
-import "./utils/chartSetup";
 import "./index.css";
 
 const theme = createTheme({

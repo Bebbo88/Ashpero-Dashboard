@@ -94,7 +94,7 @@ export function buildOverviewViewModel({ dashboard, orders, inventory }) {
     .map((order) => ({
       id: order._id,
       customerName: order.customerName,
-      totalPrice: order.totalPrice,
+      totalPrice: order.finalPrice ?? order.totalPrice,
       paymentStatus: order.paymentStatus,
       orderStatus: order.orderStatus,
       createdAt: order.createdAt,

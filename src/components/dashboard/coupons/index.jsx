@@ -2,10 +2,12 @@ import { useMemo, useState } from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import { useAppDispatch } from "../../../app/hooks";
 import { createCoupon, deleteCoupon, updateCoupon } from "../../../features/admin/adminSlice";
+import { baseDataGridSx } from "../../../utils/dataGridStyles";
 import { getCouponsColumns } from "./columns";
 import { INITIAL_FORM, buildCouponPayload, mapCouponRows, toDateInputValue } from "./helpers";
+import SnapshotStatusBanner from "../../shared/SnapshotStatusBanner";
 
-function CouponsPanel({ coupons, mutationStatus }) {
+function CouponsPanel({ coupons, mutationStatus, snapshotStatus }) {
   const dispatch = useAppDispatch();
   const [form, setForm] = useState(INITIAL_FORM);
   const [editingCouponId, setEditingCouponId] = useState("");
@@ -37,6 +39,21 @@ function CouponsPanel({ coupons, mutationStatus }) {
   async function handleSubmit(event) {
     event.preventDefault();
 
+    const discountValueNum = Number(form.discountValue);
+
+    if (form.discountType === "percentage" && discountValueNum > 100) {
+      window.alert("A percentage discount can't be more than 100%.");
+      return;
+    }
+
+    const maxUsageNum = Number(form.maxUsage);
+    const usedCountNum = Number(form.usedCount) || 0;
+
+    if (Number.isFinite(maxUsageNum) && usedCountNum > maxUsageNum) {
+      window.alert("Used count can't be greater than max usage.");
+      return;
+    }
+
     const body = buildCouponPayload(form);
 
     try {
@@ -65,8 +82,16 @@ function CouponsPanel({ coupons, mutationStatus }) {
     });
   }
 
-  function removeCoupon(id) {
-    dispatch(deleteCoupon(id));
+  async function removeCoupon(id) {
+    if (!window.confirm("Are you sure you want to delete this coupon? This cannot be undone.")) {
+      return;
+    }
+
+    try {
+      await dispatch(deleteCoupon(id)).unwrap();
+    } catch (_error) {
+      return;
+    }
 
     if (editingCouponId === id) {
       resetForm();
@@ -75,6 +100,7 @@ function CouponsPanel({ coupons, mutationStatus }) {
 
   return (
     <section className="space-y-4">
+      <SnapshotStatusBanner status={snapshotStatus} />
       <article className="panel p-4">
         <div className="mb-3">
           <h3 className="text-sm font-bold text-slate-900">
@@ -104,6 +130,7 @@ function CouponsPanel({ coupons, mutationStatus }) {
             name="discountValue"
             type="number"
             min="0"
+            max={form.discountType === "percentage" ? "100" : undefined}
             value={form.discountValue}
             onChange={setField}
             placeholder="Discount value"
@@ -181,16 +208,7 @@ function CouponsPanel({ coupons, mutationStatus }) {
               }
             }}
             disableRowSelectionOnClick
-            sx={{
-              border: 0,
-              "& .MuiDataGrid-columnHeaders": {
-                backgroundColor: "#f8fafc",
-                borderBottomColor: "#e2e8f0"
-              },
-              "& .MuiDataGrid-cell": {
-                borderBottomColor: "#eef2ff"
-              }
-            }}
+            sx={baseDataGridSx}
           />
         </div>
       </article>

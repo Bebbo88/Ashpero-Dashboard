@@ -1,4 +1,10 @@
+import { useMemo } from "react";
 import { Bar, Doughnut, Line } from "react-chartjs-2";
+// Registers Chart.js elements/controllers as a side effect. Imported here
+// (rather than at the app entry point) so Chart.js itself stays inside this
+// already-lazy-loaded chunk instead of shipping to every user, including
+// roles that can never navigate to the Overview panel.
+import "../../utils/chartSetup";
 
 const ORDER_STATUS_ORDER = [
   "new",
@@ -53,10 +59,10 @@ function buildRevenueTrendFromOrders(orders = [], monthsBack = 6) {
       continue;
     }
 
-    const totalPrice = Number(order.totalPrice || 0);
+    const orderRevenue = Number((order.finalPrice ?? order.totalPrice) || 0);
 
-    if (Number.isFinite(totalPrice) && totalPrice >= 0) {
-      bucket.revenue += totalPrice;
+    if (Number.isFinite(orderRevenue) && orderRevenue >= 0) {
+      bucket.revenue += orderRevenue;
       bucket.orders += 1;
     }
   }
@@ -121,9 +127,9 @@ function emptyChartState(message) {
 }
 
 function OverviewCharts({ orders, inventory }) {
-  const revenueTrend = buildRevenueTrendFromOrders(orders, 6);
-  const orderStatusEntries = getOrderStatusDistribution(orders);
-  const inventoryPreview = getInventoryPreview(inventory);
+  const revenueTrend = useMemo(() => buildRevenueTrendFromOrders(orders, 6), [orders]);
+  const orderStatusEntries = useMemo(() => getOrderStatusDistribution(orders), [orders]);
+  const inventoryPreview = useMemo(() => getInventoryPreview(inventory), [inventory]);
   const fixedChartClass = "relative h-[220px] max-h-[240px] md:h-[240px] md:max-h-[260px]";
 
   const statusColors = [

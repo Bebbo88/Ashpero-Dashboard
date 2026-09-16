@@ -2,8 +2,11 @@ import { useMemo, useState } from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import { useAppDispatch } from "../../../app/hooks";
 import { createTip, deleteTip, updateTip } from "../../../features/admin/adminSlice";
+import { baseDataGridSx } from "../../../utils/dataGridStyles";
 import { getTipsColumns } from "./columns";
 import { buildTipFormData, INITIAL_FORM, mapTipsRows } from "./helpers";
+import { validateFiles } from "../../../utils/fileValidation";
+import SnapshotStatusBanner from "../../shared/SnapshotStatusBanner";
 
 const EMPTY_MEDIA_FILES = {
   videoFile: null,
@@ -17,7 +20,7 @@ const EMPTY_PREVIEW_MEDIA = {
   secondaryImage: ""
 };
 
-function TipsPanel({ tips, mutationStatus }) {
+function TipsPanel({ tips, mutationStatus, snapshotStatus }) {
   const dispatch = useAppDispatch();
   const [form, setForm] = useState(INITIAL_FORM);
   const [mediaFiles, setMediaFiles] = useState(EMPTY_MEDIA_FILES);
@@ -99,8 +102,16 @@ function TipsPanel({ tips, mutationStatus }) {
     });
   }
 
-  function removeTip(id) {
-    dispatch(deleteTip(id));
+  async function removeTip(id) {
+    if (!window.confirm("Are you sure you want to delete this tip? This cannot be undone.")) {
+      return;
+    }
+
+    try {
+      await dispatch(deleteTip(id)).unwrap();
+    } catch (_error) {
+      return;
+    }
 
     if (editingTipId === id) {
       resetForm();
@@ -109,6 +120,7 @@ function TipsPanel({ tips, mutationStatus }) {
 
   return (
     <section className="space-y-4">
+      <SnapshotStatusBanner status={snapshotStatus} />
       <article className="panel p-4">
         <div className="mb-3">
           <h3 className="text-sm font-bold text-slate-900">
@@ -151,7 +163,12 @@ function TipsPanel({ tips, mutationStatus }) {
             <input
               type="file"
               accept="image/*,video/*"
-              onChange={(event) => setMediaField("videoFile", event.target.files?.[0] || null)}
+              onChange={(event) =>
+                setMediaField(
+                  "videoFile",
+                  validateFiles(event.target.files, { maxSizeMB: 50, acceptPrefix: null })[0] || null
+                )
+              }
               required={!editingTipId && !form.videoUrl.trim()}
               className="file-upload-input mt-1"
             />
@@ -196,7 +213,12 @@ function TipsPanel({ tips, mutationStatus }) {
             <input
               type="file"
               accept="image/*"
-              onChange={(event) => setMediaField("primaryImage", event.target.files?.[0] || null)}
+              onChange={(event) =>
+                setMediaField(
+                  "primaryImage",
+                  validateFiles(event.target.files, { maxSizeMB: 50 })[0] || null
+                )
+              }
               required={!editingTipId}
               className="file-upload-input mt-1"
             />
@@ -241,7 +263,12 @@ function TipsPanel({ tips, mutationStatus }) {
             <input
               type="file"
               accept="image/*"
-              onChange={(event) => setMediaField("secondaryImage", event.target.files?.[0] || null)}
+              onChange={(event) =>
+                setMediaField(
+                  "secondaryImage",
+                  validateFiles(event.target.files, { maxSizeMB: 50 })[0] || null
+                )
+              }
               required={!editingTipId}
               className="file-upload-input mt-1"
             />
@@ -295,16 +322,7 @@ function TipsPanel({ tips, mutationStatus }) {
               }
             }}
             disableRowSelectionOnClick
-            sx={{
-              border: 0,
-              "& .MuiDataGrid-columnHeaders": {
-                backgroundColor: "#f8fafc",
-                borderBottomColor: "#e2e8f0"
-              },
-              "& .MuiDataGrid-cell": {
-                borderBottomColor: "#eef2ff"
-              }
-            }}
+            sx={baseDataGridSx}
           />
         </div>
       </article>

@@ -14,8 +14,10 @@ import {
 import { normalizeList } from "./helpers";
 import ProductFormCard from "./ProductFormCard";
 import ProductsTableCard from "./ProductsTableCard";
+import { validateFiles } from "../../../utils/fileValidation";
+import SnapshotStatusBanner from "../../shared/SnapshotStatusBanner";
 
-function ProductsPanel({ products, mutationStatus }) {
+function ProductsPanel({ products, mutationStatus, snapshotStatus }) {
   const dispatch = useAppDispatch();
   const [form, setForm] = useState(INITIAL_FORM);
   const [productImageFiles, setProductImageFiles] = useState([]);
@@ -389,8 +391,17 @@ function ProductsPanel({ products, mutationStatus }) {
     setCustomCategory("");
   }
 
-  function removeProduct(id) {
-    dispatch(deleteProduct(id));
+  async function removeProduct(id) {
+    if (!window.confirm("Are you sure you want to delete this product? This cannot be undone.")) {
+      return;
+    }
+
+    try {
+      await dispatch(deleteProduct(id)).unwrap();
+    } catch (_error) {
+      // Deletion failed — leave the form/edit state untouched.
+      return;
+    }
 
     if (editingProductId === id) {
       resetForm();
@@ -399,11 +410,15 @@ function ProductsPanel({ products, mutationStatus }) {
 
   return (
     <section className="space-y-4">
+      <SnapshotStatusBanner status={snapshotStatus} />
       <ProductFormCard
         editingProductId={editingProductId}
         mutationStatus={mutationStatus}
         form={form}
         productImageFiles={productImageFiles}
+        beforeImageFile={beforeImageFile}
+        afterImageFile={afterImageFile}
+        popupGalleryFiles={popupGalleryFiles}
         editingPreview={editingPreview}
         customCategory={customCategory}
         categoryOptions={categoryOptions}
@@ -419,16 +434,24 @@ function ProductsPanel({ products, mutationStatus }) {
         }
         onToggleSkinType={(option) => toggleArrayField("skinType", option)}
         onImageFilesChange={(event) =>
-          setProductImageFiles(Array.from(event.target.files || []))
+          setProductImageFiles(
+            validateFiles(event.target.files, { maxSizeMB: 10 })
+          )
         }
         onBeforeImageChange={(event) =>
-          setBeforeImageFile(event.target.files?.[0] || null)
+          setBeforeImageFile(
+            validateFiles(event.target.files, { maxSizeMB: 10 })[0] || null
+          )
         }
         onAfterImageChange={(event) =>
-          setAfterImageFile(event.target.files?.[0] || null)
+          setAfterImageFile(
+            validateFiles(event.target.files, { maxSizeMB: 10 })[0] || null
+          )
         }
         onPopupGalleryChange={(event) =>
-          setPopupGalleryFiles(Array.from(event.target.files || []))
+          setPopupGalleryFiles(
+            validateFiles(event.target.files, { maxSizeMB: 10 })
+          )
         }
         onSubmit={handleSubmit}
         onReset={resetForm}
