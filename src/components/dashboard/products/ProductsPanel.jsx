@@ -242,17 +242,22 @@ function ProductsPanel({ products, mutationStatus, snapshotStatus }) {
     formData.append("description_en", form.description_en.trim());
     formData.append("description_ar", form.description_ar.trim());
 
-    if (isBundle) {
-      formData.append("ingredients_en", "Bundle");
-      formData.append("ingredients_ar", "باقة");
-      formData.append("howToUse_en", "Bundle");
-      formData.append("howToUse_ar", "باقة");
-    } else {
-      formData.append("ingredients_en", form.ingredients_en.trim());
-      formData.append("ingredients_ar", form.ingredients_ar.trim());
-      formData.append("howToUse_en", form.howToUse_en.trim());
-      formData.append("howToUse_ar", form.howToUse_ar.trim());
-    }
+    // The server rejects an empty ingredients/howToUse on create, so a bundle
+    // left blank still needs a placeholder to save. Only fall back to one when
+    // the field really is empty - sending it unconditionally for bundles threw
+    // away whatever the admin had typed.
+    const bundleFallback = (value, placeholder) => {
+      const text = String(value || "").trim();
+      if (text) {
+        return text;
+      }
+      return isBundle ? placeholder : text;
+    };
+
+    formData.append("ingredients_en", bundleFallback(form.ingredients_en, "Bundle"));
+    formData.append("ingredients_ar", bundleFallback(form.ingredients_ar, "باقة"));
+    formData.append("howToUse_en", bundleFallback(form.howToUse_en, "Bundle"));
+    formData.append("howToUse_ar", bundleFallback(form.howToUse_ar, "باقة"));
 
     formData.append("category", categoryValue);
 
